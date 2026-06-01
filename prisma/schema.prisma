@@ -1,0 +1,138 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Harmonia Admin · Prisma schema
+//
+// Multi-tenant strategy: SHARED DATABASE + SHARED SCHEMA with a `tenantId`
+// discriminator column on every business entity (row-level isolation).
+//   • `Tenant` is the root aggregate owned by the platform (Harmonia / Super Admin).
+//   • `slug` is the human-readable, brandable identifier used for routing,
+//     subdomains and future custom domains.
+//   • Every business row carries `tenantId`; the Service layer is responsible
+//     for injecting/enforcing the active tenant scope on each query.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserRole {
+  SUPER_ADMIN // Harmonia staff — cross-tenant, manages tenants & their catalog
+  TENANT_ADMIN // manages only their own tenant
+  TENANT_STAFF // scoped operational access within a tenant
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+/// Root aggregate. Owned by the platform, not by a tenant.
+model Tenant {
+  id        String       @id @default(cuid())
+  slug      String       @unique // routing / branding / future custom domain
+  name      String
+  status    TenantStatus @default(ACTIVE)
+
+  // Tenant profile (self-service: managed by the Tenant Admin in the settings
+  // module, or by a Super Admin on the tenant's behalf).
+  description  String?
+  contactEmail String?
+  contactPhone String?
+  logoUrl      String?
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Tenant-owned data
+  users        User[]
+  services     Service[]
+  customers    Customer[]
+  reservations Reservation[]
+
+  @@index([status])
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  // SUPER_ADMIN users have a null tenantId (they operate across all tenants).
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email     String   @unique
+  name      String?
+  role      UserRole @default(TENANT_STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+/// Example tenant-owned business entity (catalog item).
+model Service {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug        String
+  title       String
+  description String?
+  priceCents  Int      @default(0)
+  currency    String   @default("MAD")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reservations Reservation[]
+
+  // slug is unique *within* a tenant, not globally.
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("services")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email     String
+  name      String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("customers")
+}
+
+model Reservation {
+  id         String            @id @default(cuid())
+  tenantId   String
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service           @relation(fields: [serviceId], references: [id])
+  customerId String
+  customer   Customer          @relation(fields: [customerId], references: [id])
+  status     ReservationStatus @default(PENDING)
+  startsAt   DateTime
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("reservations")
+}
