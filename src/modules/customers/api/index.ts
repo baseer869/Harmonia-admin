@@ -1,6 +1,12 @@
-/**
- * Customers · API layer (module public contract)
- * The ONLY surface routes/hooks may call. Delegates to the service layer.
- * This is the seam for future extraction into a standalone backend.
- */
-export {};
+import type { Actor, Paginated } from '@/types';
+import { customerService } from '../services';
+import type { ListCustomersQuery } from '../validation';
+import type { Customer } from '../types';
+export const customerApi = {
+  list(actor: Actor, query: ListCustomersQuery): Promise<Paginated<Customer>> {
+    return customerService.list(actor, query);
+  },
+  setStatus(actor: Actor, id: string, status: 'ACTIVE' | 'BLOCKED'): Promise<Customer> {
+    return customerService.setStatus(actor, id, status);
+  },
+};

@@ -1,5 +1,54 @@
+import { assertCan, type CustomerActor } from '@/lib/auth';
+import { ApiError } from '@/lib/api';
+import type { Actor, Paginated } from '@/types';
+import { reservationRepository, type BookingResult } from '../repository';
+import {
+  createBookingSchema,
+  listReservationsQuerySchema,
+  type CreateBookingInput,
+  type ListReservationsQuery,
+} from '../validation';
+import type { Reservation } from '../types';
+
+export const reservationService = {
+  async list(actor: Actor, query: ListReservationsQuery): Promise<Paginated<Reservation>> {
+    assertCan(actor, 'read', 'reservation');
+    const { page, pageSize, status, tenantId } = listReservationsQuerySchema.parse(query);
+    const scope = actor.role === 'SUPER_ADMIN' ? tenantId : (actor.tenantId ?? undefined);
+    if (actor.role !== 'SUPER_ADMIN' && !scope) throw ApiError.forbidden('No tenant scope.');
+    const { items, total } = await reservationRepository.findMany({
+      tenantId: scope, status, skip: (page - 1) * pageSize, take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  },
+};
+
 /**
- * Reservations · Service layer (application/domain logic)
- * Internal. Enforces business rules, RBAC and tenant isolation.
+ * Public booking (no admin auth). Submitted by the client website. The customer
+ * is the authenticated session customer (if any) or the guest contact in the
+ * payload. Pricing is computed server-side; a PENDING reservation is created.
  */
-export {};
+export const publicBookingService = {
+  async create(
+    tenantSlug: string,
+    input: CreateBookingInput,
+    sessionCustomer: CustomerActor | null,
+  ): Promise<BookingResult> {
+    const tenantId = await reservationRepository.tenantIdBySlug(tenantSlug);
+    if (!tenantId) throw ApiError.notFound('Unknown tenant.');
+
+    const data = createBookingSchema.parse(input);
+
+    // Resolve the customer: session (must match tenant) or guest contact.
+    let customerId: string;
+    if (sessionCustomer && sessionCustomer.tenantId === tenantId) {
+      customerId = sessionCustomer.id;
+    } else if (data.customer) {
+      customerId = await reservationRepository.findOrCreateCustomer(tenantId, data.customer);
+    } else {
+      throw ApiError.badRequest('Sign in or provide contact details to book.');
+    }
+
+    return reservationRepository.createBooking(tenantId, customerId, data.items, data.notes);
+  },
+};

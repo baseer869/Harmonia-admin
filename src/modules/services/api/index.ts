@@ -1,6 +1,6 @@
 import type { Actor, Paginated } from '@/types';
 
-import { serviceCatalogService } from '../services';
+import { publicServiceCatalog, serviceCatalogService } from '../services';
 import type {
   CreateServiceInput,
   ListServicesQuery,
@@ -36,5 +36,15 @@ export const serviceApi = {
   },
   remove(actor: Actor, id: string): Promise<void> {
     return serviceCatalogService.remove(actor, id);
+  },
+};
+
+/** Public catalog API (no auth) — consumed by the client website. */
+export const publicServiceApi = {
+  list(tenantSlug: string, query: ListServicesQuery): Promise<Paginated<Service>> {
+    return publicServiceCatalog.list(tenantSlug, query);
+  },
+  getBySlug(tenantSlug: string, serviceSlug: string): Promise<Service> {
+    return publicServiceCatalog.getBySlug(tenantSlug, serviceSlug);
   },
 };

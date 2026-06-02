@@ -29,3 +29,22 @@ export function fail(error: unknown): NextResponse<ApiResult<never>> {
     { status: 500 },
   );
 }
+
+/**
+ * CORS for the public API consumed by the separate client origin.
+ * Allows credentials so customer-session cookies work cross-origin.
+ */
+export function withCors<T extends NextResponse>(res: T): T {
+  const origin = process.env.CLIENT_ORIGIN ?? 'http://localhost:3000';
+  res.headers.set('Access-Control-Allow-Origin', origin);
+  res.headers.set('Access-Control-Allow-Credentials', 'true');
+  res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-tenant-slug');
+  res.headers.set('Vary', 'Origin');
+  return res;
+}
+
+/** Standard CORS preflight response. */
+export function corsPreflight(): NextResponse {
+  return withCors(new NextResponse(null, { status: 204 }));
+}

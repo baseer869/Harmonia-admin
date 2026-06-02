@@ -72,6 +72,14 @@ export const tenantService = {
       name: data.name,
       slug,
       status: data.status,
+      defaultCurrency: data.defaultCurrency,
+      defaultLocale: data.defaultLocale,
+      timezone: data.timezone,
+      description: emptyToNull(data.description),
+      contactEmail: emptyToNull(data.contactEmail),
+      contactPhone: emptyToNull(data.contactPhone),
+      logoUrl: emptyToNull(data.logoUrl),
+      coverUrl: emptyToNull(data.coverUrl),
     });
   },
 

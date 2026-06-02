@@ -1,4 +1,1 @@
-/**
- * Auth · Components layer (module-scoped UI)
- */
-export {};
+export * from './login-form';

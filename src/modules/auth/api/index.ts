@@ -1,6 +1,27 @@
+import { authService } from '../services';
+import type {
+  AdminLoginInput,
+  CustomerLoginInput,
+  CustomerRegisterInput,
+} from '../validation';
+import type { AuthCustomer, AuthUser, SessionResult } from '../types';
+
 /**
- * Auth · API layer (module public contract)
- * The ONLY surface routes/hooks may call. Delegates to the service layer.
- * This is the seam for future extraction into a standalone backend.
+ * Auth · API (module public contract). Returns the signed token + principal;
+ * the route handler is responsible for setting/clearing the cookie.
  */
-export {};
+export const authApi = {
+  adminLogin(input: AdminLoginInput): Promise<SessionResult<AuthUser>> {
+    return authService.adminLogin(input);
+  },
+  customerRegister(
+    input: CustomerRegisterInput,
+  ): Promise<SessionResult<AuthCustomer>> {
+    return authService.customerRegister(input);
+  },
+  customerLogin(
+    input: CustomerLoginInput,
+  ): Promise<SessionResult<AuthCustomer>> {
+    return authService.customerLogin(input);
+  },
+};

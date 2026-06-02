@@ -15,6 +15,16 @@ export const createTenantSchema = z.object({
   // Optional: derived from `name` via slugify when omitted.
   slug: slugSchema.optional(),
   status: tenantStatusSchema.default('ACTIVE'),
+  // Locale / branding (optional — sensible defaults applied)
+  defaultCurrency: z.string().length(3).optional(),
+  defaultLocale: z.string().min(2).max(5).optional(),
+  timezone: z.string().min(2).max(64).optional(),
+  description: z.string().max(2000).optional(),
+  contactEmail: z.string().email().optional().or(z.literal('')),
+  contactPhone: z.string().max(40).optional().or(z.literal('')),
+  // Uploaded asset paths (e.g. /uploads/xyz.png) — not full URLs.
+  logoUrl: z.string().optional().or(z.literal('')),
+  coverUrl: z.string().optional().or(z.literal('')),
 });
 
 export const updateTenantSchema = z

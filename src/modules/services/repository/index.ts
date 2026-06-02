@@ -1,15 +1,16 @@
 import { prisma } from '@/lib/db';
-import type { Service as PrismaService } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-import type { Service } from '../types';
+import type {
+  Service,
+  ServiceIncluded,
+  ServiceInfo,
+} from '../types';
+import type { PriceMode, ServiceType } from '../validation';
 
 /**
- * Services · repository (tenant-scoped data access).
- *
- * THIS is where row-level tenant isolation lives: EVERY method takes a
- * `tenantId` and includes it in the `where` clause, so a query can only ever
- * see/affect rows belonging to that tenant. The service layer is responsible
- * for passing the correct, authorised `tenantId` (via `resolveTenantContext`).
+ * Services · repository (tenant-scoped data access). EVERY method takes a
+ * `tenantId` and filters by it (row-level isolation).
  */
 
 export interface ListServicesArgs {
@@ -20,57 +21,90 @@ export interface ListServicesArgs {
 }
 
 export interface CreateServiceData {
+  categoryId?: string | null;
+  type: ServiceType;
   slug: string;
   title: string;
+  subtitle?: string | null;
   description?: string | null;
+  tags: string[];
+  coverUrl?: string | null;
+  thumbUrl?: string | null;
+  priceMode: PriceMode;
   priceCents: number;
   currency: string;
+  priceUnit?: string | null;
+  requiresDate: boolean;
+  minPeople?: number | null;
+  maxPeople?: number | null;
+  durationMinutes?: number | null;
+  languages: string[];
   active: boolean;
+  featured: boolean;
+  options: { name: string; priceDeltaCents: number }[];
+  extras: { name: string; priceCents: number }[];
+  included: ServiceIncluded[];
+  info: ServiceInfo[];
 }
 
-export interface UpdateServiceData {
-  slug?: string;
-  title?: string;
-  description?: string | null;
-  priceCents?: number;
-  currency?: string;
-  active?: boolean;
-}
+/** Full update = the create shape; nested relations are rebuilt in place. */
+export type UpdateServiceData = CreateServiceData;
 
-export interface ServiceRepository {
-  findMany(
-    args: ListServicesArgs,
-  ): Promise<{ items: Service[]; total: number }>;
-  findById(tenantId: string, id: string): Promise<Service | null>;
-  findBySlug(tenantId: string, slug: string): Promise<Service | null>;
-  create(tenantId: string, data: CreateServiceData): Promise<Service>;
-  update(
-    tenantId: string,
-    id: string,
-    data: UpdateServiceData,
-  ): Promise<Service | null>;
-  remove(tenantId: string, id: string): Promise<boolean>;
-}
+const withRelations = {
+  options: { orderBy: { sortOrder: 'asc' as const } },
+  extras: { orderBy: { sortOrder: 'asc' as const } },
+  media: { orderBy: { sortOrder: 'asc' as const } },
+};
 
-function toDomain(row: PrismaService): Service {
+type ServiceRow = Prisma.ServiceGetPayload<{ include: typeof withRelations }>;
+
+function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>): Service {
+  const r = row as ServiceRow;
   return {
-    id: row.id,
-    tenantId: row.tenantId,
-    slug: row.slug,
-    title: row.title,
-    description: row.description,
-    priceCents: row.priceCents,
-    currency: row.currency,
-    active: row.active,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    id: r.id,
+    tenantId: r.tenantId,
+    categoryId: r.categoryId,
+    type: r.type,
+    slug: r.slug,
+    title: r.title,
+    subtitle: r.subtitle,
+    description: r.description,
+    tags: r.tags,
+    coverUrl: r.coverUrl,
+    thumbUrl: r.thumbUrl,
+    priceMode: r.priceMode,
+    priceCents: r.priceCents,
+    currency: r.currency,
+    priceUnit: r.priceUnit,
+    requiresDate: r.requiresDate,
+    minPeople: r.minPeople,
+    maxPeople: r.maxPeople,
+    durationMinutes: r.durationMinutes,
+    languages: r.languages,
+    active: r.active,
+    featured: r.featured,
+    ratingCached: r.ratingCached,
+    reviewCount: r.reviewCountCached,
+    included: (r.includedJson as ServiceIncluded[] | null) ?? [],
+    info: (r.infoJson as ServiceInfo[] | null) ?? [],
+    options: (r.options ?? []).map((o) => ({
+      name: o.name,
+      priceDeltaCents: o.priceDeltaCents,
+    })),
+    extras: (r.extras ?? []).map((e) => ({
+      name: e.name,
+      priceCents: e.priceCents,
+    })),
+    media: (r.media ?? []).map((m) => ({ url: m.url, type: m.type, alt: m.alt })),
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
   };
 }
 
-class PrismaServiceRepository implements ServiceRepository {
+export const serviceRepository = {
   async findMany({ tenantId, skip, take, search }: ListServicesArgs) {
     const where = {
-      tenantId, // ← isolation
+      tenantId,
       ...(search
         ? {
             OR: [
@@ -80,52 +114,116 @@ class PrismaServiceRepository implements ServiceRepository {
           }
         : {}),
     };
-
     const [rows, total] = await Promise.all([
-      prisma.service.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
+      prisma.service.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
       prisma.service.count({ where }),
     ]);
-
     return { items: rows.map(toDomain), total };
-  }
+  },
 
   async findById(tenantId: string, id: string) {
-    const row = await prisma.service.findFirst({ where: { id, tenantId } });
+    const row = await prisma.service.findFirst({
+      where: { id, tenantId },
+      include: withRelations,
+    });
     return row ? toDomain(row) : null;
-  }
+  },
 
   async findBySlug(tenantId: string, slug: string) {
     const row = await prisma.service.findUnique({
       where: { tenantId_slug: { tenantId, slug } },
+      include: withRelations,
     });
     return row ? toDomain(row) : null;
-  }
+  },
 
-  async create(tenantId: string, data: CreateServiceData) {
-    const row = await prisma.service.create({ data: { ...data, tenantId } });
-    return toDomain(row);
-  }
+  /** Public catalog: active services only. */
+  async findManyActive(args: { tenantId: string; skip: number; take: number; search?: string }) {
+    const where = {
+      tenantId: args.tenantId,
+      active: true,
+      ...(args.search
+        ? { title: { contains: args.search, mode: 'insensitive' as const } }
+        : {}),
+    };
+    const [rows, total] = await Promise.all([
+      prisma.service.findMany({
+        where,
+        skip: args.skip,
+        take: args.take,
+        orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      }),
+      prisma.service.count({ where }),
+    ]);
+    return { items: rows.map(toDomain), total };
+  },
 
-  async update(tenantId: string, id: string, data: UpdateServiceData) {
-    // Scope the mutation to the tenant; never trust the id alone.
-    const result = await prisma.service.updateMany({
-      where: { id, tenantId },
-      data,
+  /** Public detail: a single active service (with options/extras/media). */
+  async findActiveBySlug(tenantId: string, slug: string) {
+    const row = await prisma.service.findFirst({
+      where: { tenantId, slug, active: true },
+      include: withRelations,
     });
-    if (result.count === 0) return null;
+    return row ? toDomain(row) : null;
+  },
+
+  async tenantIdBySlug(slug: string) {
+    const t = await prisma.tenant.findUnique({
+      where: { slug },
+      select: { id: true, status: true },
+    });
+    return t && t.status === 'ACTIVE' ? t.id : null;
+  },
+
+  async create(tenantId: string, data: CreateServiceData): Promise<Service> {
+    const { options, extras, included, info, categoryId, ...scalars } = data;
+    const row = await prisma.service.create({
+      data: {
+        tenantId,
+        ...(categoryId ? { categoryId } : {}),
+        ...scalars,
+        includedJson: included as unknown as Prisma.InputJsonValue,
+        infoJson: info as unknown as Prisma.InputJsonValue,
+        options: {
+          create: options.map((o, i) => ({ ...o, sortOrder: i })),
+        },
+        extras: {
+          create: extras.map((e, i) => ({ ...e, sortOrder: i })),
+        },
+      },
+      include: withRelations,
+    });
+    return toDomain(row);
+  },
+
+  async update(tenantId: string, id: string, data: UpdateServiceData): Promise<Service | null> {
+    const exists = await prisma.service.findFirst({
+      where: { id, tenantId },
+      select: { id: true },
+    });
+    if (!exists) return null;
+
+    const { options, extras, included, info, categoryId, ...scalars } = data;
+    await prisma.$transaction([
+      prisma.serviceOption.deleteMany({ where: { serviceId: id } }),
+      prisma.serviceExtra.deleteMany({ where: { serviceId: id } }),
+      prisma.service.update({
+        where: { id },
+        data: {
+          ...scalars,
+          categoryId: categoryId ?? null,
+          includedJson: included as unknown as Prisma.InputJsonValue,
+          infoJson: info as unknown as Prisma.InputJsonValue,
+          options: { create: options.map((o, i) => ({ ...o, sortOrder: i })) },
+          extras: { create: extras.map((e, i) => ({ ...e, sortOrder: i })) },
+        },
+      }),
+    ]);
     return this.findById(tenantId, id);
-  }
+  },
 
   async remove(tenantId: string, id: string) {
     const result = await prisma.service.deleteMany({ where: { id, tenantId } });
     return result.count > 0;
-  }
-}
-
-export const serviceRepository: ServiceRepository =
-  new PrismaServiceRepository();
+  },
+};

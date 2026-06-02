@@ -2,26 +2,26 @@ import * as React from 'react';
 
 import type { Role } from '@/types';
 import { Sidebar } from './sidebar';
+import { Topbar } from './topbar';
 
-/** App chrome: role-aware sidebar + scrollable content region. */
+/** Enterprise shell: fixed sidebar + fixed header + scrollable content. */
 export function AdminShell({
   role,
+  email,
   children,
 }: {
   role: Role;
+  email: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="bg-background min-h-screen">
       <Sidebar role={role} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b px-6">
-          <span className="text-muted-foreground text-sm">
-            Multi-tenant control panel
-          </span>
-          <span className="text-muted-foreground text-xs">{role}</span>
-        </header>
-        <main className="flex-1 p-6">{children}</main>
+      <div className="flex min-h-screen flex-col md:pl-[404px]">
+        <Topbar role={role} email={email} />
+        <main className="w-full flex-1 p-6 lg:px-10 lg:py-8 2xl:max-w-450">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google';
 import './globals.css';
 
-import { AdminShell } from '@/components/layouts';
 import { siteConfig } from '@/config';
-import { getCurrentActor } from '@/lib/auth';
 import { Providers } from './providers';
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -14,21 +20,15 @@ export const metadata: Metadata = {
   description: siteConfig.description,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const actor = await getCurrentActor();
-
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
-        <Providers>
-          <AdminShell role={actor?.role ?? 'TENANT_STAFF'}>
-            {children}
-          </AdminShell>
-        </Providers>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

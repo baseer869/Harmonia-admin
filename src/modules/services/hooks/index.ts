@@ -44,10 +44,18 @@ export function useServices(query?: Partial<ListServicesQuery>) {
   });
 }
 
+export function useService(id?: string) {
+  return useQuery({
+    queryKey: serviceKeys.detail(id ?? ''),
+    queryFn: () => http.get<Service>(`/api/services/${id}`),
+    enabled: Boolean(id),
+  });
+}
+
 export function useCreateService() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateServiceInput) =>
+    mutationFn: (input: CreateServiceInput & { tenantId?: string }) =>
       http.post<Service>('/api/services', input),
     onSuccess: () => qc.invalidateQueries({ queryKey: serviceKeys.lists() }),
   });

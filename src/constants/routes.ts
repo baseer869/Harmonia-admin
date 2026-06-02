@@ -1,3 +1,17 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  BarChart3,
+  CalendarCheck2,
+  ConciergeBell,
+  Home,
+  LayoutDashboard,
+  Settings,
+  UserRound,
+  Users,
+  Wallet,
+  Handshake,
+} from 'lucide-react';
+
 import type { Role } from '@/types';
 
 /** Centralised admin route map — avoids stringly-typed links across the app. */
@@ -6,6 +20,7 @@ export const ROUTES = {
   tenants: '/tenants',
   users: '/users',
   services: '/services',
+  categories: '/categories',
   reservations: '/reservations',
   customers: '/customers',
   vendors: '/vendors',
@@ -17,32 +32,61 @@ export const ROUTES = {
 
 export type RouteKey = keyof typeof ROUTES;
 
-export interface NavItem {
+export interface NavChild {
   key: RouteKey;
   label: string;
-  /** Roles allowed to see this nav entry. */
   roles: ReadonlyArray<Role>;
+}
+
+export interface NavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  roles: ReadonlyArray<Role>;
+  /** Leaf route (when there are no children). */
+  href?: RouteKey;
+  /** Nested submenu (e.g. Users Management → Admins, App Users). */
+  children?: NavChild[];
+  /** Expand the submenu by default. */
+  defaultOpen?: boolean;
 }
 
 const ALL: ReadonlyArray<Role> = ['SUPER_ADMIN', 'TENANT_ADMIN', 'TENANT_STAFF'];
 const SUPER: ReadonlyArray<Role> = ['SUPER_ADMIN'];
+const ADMINS: ReadonlyArray<Role> = ['SUPER_ADMIN', 'TENANT_ADMIN'];
 
 /**
- * Sidebar navigation. Visibility is role-gated so a Tenant Admin sees only
- * their minimal self-service surface (Services + Settings/profile), while the
- * platform Super Admin sees everything. Pages still enforce access server-side;
- * this is UX, not the security boundary.
+ * Sidebar navigation (leaf items + nested groups). Role-gated for UX; pages
+ * still enforce access server-side.
  */
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
-  { key: 'dashboard', label: 'Dashboard', roles: ALL },
-  { key: 'tenants', label: 'Tenants', roles: SUPER },
-  { key: 'users', label: 'Users', roles: SUPER },
-  { key: 'services', label: 'Services', roles: ALL },
-  { key: 'reservations', label: 'Reservations', roles: SUPER },
-  { key: 'customers', label: 'Customers', roles: SUPER },
-  { key: 'vendors', label: 'Vendors', roles: SUPER },
-  { key: 'properties', label: 'Properties', roles: SUPER },
-  { key: 'payments', label: 'Payments', roles: SUPER },
-  { key: 'reports', label: 'Reports', roles: SUPER },
-  { key: 'settings', label: 'Settings', roles: ['SUPER_ADMIN', 'TENANT_ADMIN'] },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ALL, href: 'dashboard' },
+  {
+    id: 'users-mgmt',
+    label: 'Users Management',
+    icon: Users,
+    roles: ADMINS,
+    children: [
+      { key: 'users', label: 'Admins', roles: SUPER },
+      { key: 'customers', label: 'App Users', roles: ALL },
+      { key: 'tenants', label: 'Tenants', roles: SUPER },
+    ],
+  },
+  {
+    id: 'services',
+    label: 'Services',
+    icon: ConciergeBell,
+    roles: ALL,
+    defaultOpen: true,
+    children: [
+      { key: 'services', label: 'Catalog', roles: ALL },
+      { key: 'categories', label: 'Categories', roles: ALL },
+    ],
+  },
+  { id: 'reservations', label: 'Bookings', icon: CalendarCheck2, roles: ALL, href: 'reservations' },
+  { id: 'vendors', label: 'Vendors', icon: Handshake, roles: SUPER, href: 'vendors' },
+  { id: 'properties', label: 'Properties', icon: Home, roles: SUPER, href: 'properties' },
+  { id: 'payments', label: 'Payments', icon: Wallet, roles: SUPER, href: 'payments' },
+  { id: 'reports', label: 'Reports', icon: BarChart3, roles: SUPER, href: 'reports' },
+  { id: 'settings', label: 'Settings', icon: Settings, roles: ADMINS, href: 'settings' },
 ];

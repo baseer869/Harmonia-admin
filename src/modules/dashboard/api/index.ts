@@ -1,6 +1,11 @@
-/**
- * Dashboard · API layer (module public contract)
- * The ONLY surface routes/hooks may call. Delegates to the service layer.
- * This is the seam for future extraction into a standalone backend.
- */
-export {};
+import type { Actor } from '@/types';
+
+import { dashboardService } from '../services';
+import type { DashboardStats } from '../types';
+
+/** Dashboard · API (module public contract). */
+export const dashboardApi = {
+  getStats(actor: Actor): Promise<DashboardStats> {
+    return dashboardService.getStats(actor);
+  },
+};

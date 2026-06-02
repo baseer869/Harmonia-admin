@@ -1,36 +1,39 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 /**
- * Storage abstraction (object/file storage).
+ * Local-disk file storage (dev/default).
  *
- * Provider-agnostic interface so modules depend on the contract, not on S3 /
- * GCS / local disk. Tenant-scoped keys keep tenant assets isolated.
+ * Files are written to `public/uploads/` so Next serves them statically at
+ * `/uploads/<name>`. Swap `saveUpload` for an S3/GCS implementation in
+ * production (the returned `url` is the only contract callers depend on).
  */
-export interface StoredObject {
-  key: string;
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+const ALLOWED = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']);
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+
+export interface UploadResult {
   url: string;
   size: number;
   contentType: string;
 }
 
-export interface StorageProvider {
-  put(key: string, data: Buffer | Blob, contentType: string): Promise<StoredObject>;
-  get(key: string): Promise<StoredObject | null>;
-  remove(key: string): Promise<void>;
-  /** Build a tenant-scoped object key. */
-  scopedKey(tenantId: string, path: string): string;
-}
+export async function saveUpload(file: File): Promise<UploadResult> {
+  if (!file || typeof file.arrayBuffer !== 'function') {
+    throw new Error('No file provided.');
+  }
+  if (file.size > MAX_BYTES) {
+    throw new Error('File too large (max 5MB).');
+  }
+  const ext = (path.extname(file.name) || '.png').toLowerCase();
+  if (!ALLOWED.has(ext)) {
+    throw new Error('Unsupported file type.');
+  }
 
-/** Placeholder provider — swap for a real implementation (S3/GCS/etc.). */
-export const storage: StorageProvider = {
-  async put() {
-    throw new Error('storage.put not implemented');
-  },
-  async get() {
-    throw new Error('storage.get not implemented');
-  },
-  async remove() {
-    throw new Error('storage.remove not implemented');
-  },
-  scopedKey(tenantId, path) {
-    return `tenants/${tenantId}/${path.replace(/^\/+/, '')}`;
-  },
-};
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  await writeFile(path.join(UPLOAD_DIR, name), bytes);
+
+  return { url: `/uploads/${name}`, size: file.size, contentType: file.type };
+}

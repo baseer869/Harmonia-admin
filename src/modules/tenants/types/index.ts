@@ -20,6 +20,7 @@ export interface Tenant {
   contactEmail: string | null;
   contactPhone: string | null;
   logoUrl: string | null;
+  coverUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -4,33 +4,41 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  /* Harmonia admin — enterprise SaaS (Metronic/Tabler) + gold primary. */
+  --radius: 0.625rem; /* 10px */
+
+  --background: oklch(0.978 0.002 264); /* #F7F8FA */
+  --foreground: oklch(0.31 0.03 264); /* #1F2937 heading */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.31 0.03 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+  --popover-foreground: oklch(0.31 0.03 264);
+
+  /* Gold primary (Harmonia) */
+  --primary: oklch(0.74 0.1 84);
+  --primary-foreground: oklch(0.26 0.02 80);
+
+  --secondary: oklch(0.965 0.003 264);
+  --secondary-foreground: oklch(0.42 0.03 264); /* #4B5563 text */
+  --muted: oklch(0.965 0.003 264);
+  --muted-foreground: oklch(0.68 0.02 264); /* #9CA3AF muted */
+  --accent: oklch(0.95 0.028 88); /* gold tint (hover/active) */
+  --accent-foreground: oklch(0.42 0.05 78);
+  --destructive: oklch(0.58 0.22 27);
+
+  --border: oklch(0.92 0.004 264); /* #E5E7EB */
+  --input: oklch(0.92 0.004 264);
+  --ring: oklch(0.74 0.1 84);
+
+  /* Sidebar — solid Harmonia gold (MYBOAT-style colored rail) */
+  --sidebar: oklch(0.62 0.108 83); /* deep gold rail */
+  --sidebar-foreground: oklch(1 0 0 / 0.82); /* soft-white inactive */
+  --sidebar-primary: oklch(0.58 0.11 82); /* gold accent (active text on white) */
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(1 0 0); /* white active pill */
+  --sidebar-accent-foreground: oklch(0.55 0.11 81); /* gold text in pill */
+  --sidebar-border: oklch(1 0 0 / 0.18);
+  --sidebar-ring: oklch(1 0 0 / 0.4);
 }
 
 .dark {
@@ -63,6 +71,8 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -101,5 +111,48 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 13px; /* body 13px / 400 per design system */
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+    color: var(--foreground);
+  }
+}
+
+/* Flat enterprise canvas (no gradients). */
+@layer components {
+  .app-canvas {
+    background: var(--background);
+  }
+  /* Page title — 30px / 600 (Poppins, 100% line-height) */
+  .page-title {
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.05;
+  }
+  /* Listing / sub-table title — 28px / 600 */
+  .section-title {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.05;
+  }
+  /* Table header label — 18px / 700 */
+  .th {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  /* Table record text — 16px / 400 */
+  .td {
+    font-size: 16px;
+    font-weight: 400;
   }
 }

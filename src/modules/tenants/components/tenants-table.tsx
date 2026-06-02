@@ -2,20 +2,13 @@
 
 import { type ColumnDef } from '@tanstack/react-table';
 
-import { Badge, type badgeVariants } from '@/components/ui';
+import { Eye } from 'lucide-react';
+
+import { StatusBadge } from '@/components/ui';
 import { DataTable } from '@/components/tables';
-import type { VariantProps } from 'class-variance-authority';
 
 import { useTenants } from '../hooks';
-import type { Tenant, TenantStatus } from '../types';
-
-type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
-
-const STATUS_VARIANT: Record<TenantStatus, BadgeVariant> = {
-  ACTIVE: 'default',
-  SUSPENDED: 'secondary',
-  ARCHIVED: 'outline',
-};
+import type { Tenant } from '../types';
 
 const columns: ColumnDef<Tenant>[] = [
   { accessorKey: 'name', header: 'Name' },
@@ -31,11 +24,7 @@ const columns: ColumnDef<Tenant>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
-    cell: ({ row }) => (
-      <Badge variant={STATUS_VARIANT[row.original.status]}>
-        {row.original.status}
-      </Badge>
-    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     accessorKey: 'createdAt',
@@ -46,6 +35,19 @@ const columns: ColumnDef<Tenant>[] = [
         month: 'short',
         day: 'numeric',
       }),
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: () => (
+      <button
+        type="button"
+        className="text-primary/80 hover:text-primary transition-colors"
+        aria-label="View"
+      >
+        <Eye className="size-4" />
+      </button>
+    ),
   },
 ];
 

@@ -26,6 +26,14 @@ export interface CreateTenantData {
   name: string;
   slug: string;
   status: TenantStatus;
+  defaultCurrency?: string;
+  defaultLocale?: string;
+  timezone?: string;
+  description?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
 }
 
 export interface UpdateTenantData {
@@ -56,6 +64,7 @@ function toDomain(row: PrismaTenant): Tenant {
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
     logoUrl: row.logoUrl,
+    coverUrl: row.coverUrl,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

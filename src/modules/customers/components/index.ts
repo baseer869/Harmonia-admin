@@ -1,4 +1,1 @@
-/**
- * Customers · Components layer (module-scoped UI)
- */
-export {};
+export * from './customers-table';

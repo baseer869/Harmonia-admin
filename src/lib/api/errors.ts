@@ -21,6 +21,9 @@ export class ApiError extends Error {
   static notFound(message = 'Resource not found') {
     return new ApiError('NOT_FOUND', message, 404);
   }
+  static unauthorized(message = 'Authentication required') {
+    return new ApiError('UNAUTHORIZED', message, 401);
+  }
   static forbidden(message = 'Forbidden') {
     return new ApiError('FORBIDDEN', message, 403);
   }
