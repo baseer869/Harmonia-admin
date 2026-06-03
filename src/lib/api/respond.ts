@@ -31,12 +31,32 @@ export function fail(error: unknown): NextResponse<ApiResult<never>> {
 }
 
 /**
+ * Decide which origin to allow. Reflects the caller's origin when it is the
+ * configured client, localhost, or any *.vercel.app deployment — otherwise
+ * falls back to CLIENT_ORIGIN. Reflecting (vs a single env value) means the
+ * public API keeps working across preview/prod URLs with no env juggling.
+ */
+function resolveAllowedOrigin(requestOrigin?: string | null): string {
+  const fallback = process.env.CLIENT_ORIGIN ?? 'http://localhost:3000';
+  if (!requestOrigin) return fallback;
+  try {
+    const host = new URL(requestOrigin).host;
+    const allowed =
+      requestOrigin === fallback ||
+      /^localhost(:\d+)?$/.test(host) ||
+      host.endsWith('.vercel.app');
+    return allowed ? requestOrigin : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * CORS for the public API consumed by the separate client origin.
  * Allows credentials so customer-session cookies work cross-origin.
  */
-export function withCors<T extends NextResponse>(res: T): T {
-  const origin = process.env.CLIENT_ORIGIN ?? 'http://localhost:3000';
-  res.headers.set('Access-Control-Allow-Origin', origin);
+export function withCors<T extends NextResponse>(res: T, requestOrigin?: string | null): T {
+  res.headers.set('Access-Control-Allow-Origin', resolveAllowedOrigin(requestOrigin));
   res.headers.set('Access-Control-Allow-Credentials', 'true');
   res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-tenant-slug');
@@ -45,6 +65,6 @@ export function withCors<T extends NextResponse>(res: T): T {
 }
 
 /** Standard CORS preflight response. */
-export function corsPreflight(): NextResponse {
-  return withCors(new NextResponse(null, { status: 204 }));
+export function corsPreflight(requestOrigin?: string | null): NextResponse {
+  return withCors(new NextResponse(null, { status: 204 }), requestOrigin);
 }

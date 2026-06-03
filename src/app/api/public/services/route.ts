@@ -4,12 +4,13 @@ import { publicServiceApi } from '@/modules/services/server';
 import { TENANT_SLUG_HEADER } from '@/constants';
 import { ApiError, corsPreflight, fail, ok, withCors } from '@/lib/api';
 
-export function OPTIONS() {
-  return corsPreflight();
+export function OPTIONS(request: NextRequest) {
+  return corsPreflight(request.headers.get('origin'));
 }
 
 /** Public catalog list. Tenant resolved from the x-tenant-slug header (or ?tenant). */
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin');
   try {
     const sp = request.nextUrl.searchParams;
     const tenantSlug = request.headers.get(TENANT_SLUG_HEADER) ?? sp.get('tenant');
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
       pageSize: Number(sp.get('pageSize') ?? 50),
       search: sp.get('search') ?? undefined,
     });
-    return withCors(ok(result));
+    return withCors(ok(result), origin);
   } catch (error) {
-    return withCors(fail(error));
+    return withCors(fail(error), origin);
   }
 }

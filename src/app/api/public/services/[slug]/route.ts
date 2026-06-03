@@ -6,19 +6,20 @@ import { ApiError, corsPreflight, fail, ok, withCors } from '@/lib/api';
 
 type Context = { params: Promise<{ slug: string }> };
 
-export function OPTIONS() {
-  return corsPreflight();
+export function OPTIONS(request: NextRequest) {
+  return corsPreflight(request.headers.get('origin'));
 }
 
 /** Public service detail by slug. */
 export async function GET(request: NextRequest, { params }: Context) {
+  const origin = request.headers.get('origin');
   try {
     const tenantSlug =
       request.headers.get(TENANT_SLUG_HEADER) ?? request.nextUrl.searchParams.get('tenant');
     if (!tenantSlug) throw ApiError.badRequest('Missing tenant.');
     const { slug } = await params;
-    return withCors(ok(await publicServiceApi.getBySlug(tenantSlug, slug)));
+    return withCors(ok(await publicServiceApi.getBySlug(tenantSlug, slug)), origin);
   } catch (error) {
-    return withCors(fail(error));
+    return withCors(fail(error), origin);
   }
 }
