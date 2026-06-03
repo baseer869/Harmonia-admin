@@ -278,9 +278,19 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       )}
 
       {step === 2 && (
-        <div className="grid gap-8 md:grid-cols-[auto_1fr]">
-          <ImageUpload label="Thumbnail" variant="logo" value={thumb} onChange={(u) => setValue('thumbUrl', u)} />
-          <ImageUpload label="Cover image" variant="cover" value={cover} onChange={(u) => setValue('coverUrl', u)} />
+        <div className="max-w-xl">
+          <ImageUpload
+            label="Photo"
+            variant="cover"
+            value={cover || thumb}
+            onChange={(u) => {
+              setValue('coverUrl', u);
+              setValue('thumbUrl', u);
+            }}
+          />
+          <p className="text-muted-foreground mt-2 text-sm">
+            One photo is enough — it’s used as both the cover and the thumbnail.
+          </p>
         </div>
       )}
 
