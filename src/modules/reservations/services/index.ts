@@ -5,19 +5,21 @@ import { reservationRepository, type BookingResult } from '../repository';
 import {
   createBookingSchema,
   listReservationsQuerySchema,
+  updateReservationStatusSchema,
   type CreateBookingInput,
   type ListReservationsQuery,
+  type UpdateReservationStatusInput,
 } from '../validation';
 import type { Reservation, ReservationDetail } from '../types';
 
 export const reservationService = {
   async list(actor: Actor, query: ListReservationsQuery): Promise<Paginated<Reservation>> {
     assertCan(actor, 'read', 'reservation');
-    const { page, pageSize, status, tenantId } = listReservationsQuerySchema.parse(query);
+    const { page, pageSize, status, search, tenantId } = listReservationsQuerySchema.parse(query);
     const scope = actor.role === 'SUPER_ADMIN' ? tenantId : (actor.tenantId ?? undefined);
     if (actor.role !== 'SUPER_ADMIN' && !scope) throw ApiError.forbidden('No tenant scope.');
     const { items, total } = await reservationRepository.findMany({
-      tenantId: scope, status, skip: (page - 1) * pageSize, take: pageSize,
+      tenantId: scope, status, search, skip: (page - 1) * pageSize, take: pageSize,
     });
     return { items, total, page, pageSize };
   },
@@ -27,6 +29,20 @@ export const reservationService = {
     const scope = actor.role === 'SUPER_ADMIN' ? undefined : (actor.tenantId ?? undefined);
     if (actor.role !== 'SUPER_ADMIN' && !scope) throw ApiError.forbidden('No tenant scope.');
     const detail = await reservationRepository.findById(scope, id);
+    if (!detail) throw ApiError.notFound('Booking not found.');
+    return detail;
+  },
+
+  async updateStatus(
+    actor: Actor,
+    id: string,
+    input: UpdateReservationStatusInput,
+  ): Promise<ReservationDetail> {
+    assertCan(actor, 'update', 'reservation');
+    const { status } = updateReservationStatusSchema.parse(input);
+    const scope = actor.role === 'SUPER_ADMIN' ? undefined : (actor.tenantId ?? undefined);
+    if (actor.role !== 'SUPER_ADMIN' && !scope) throw ApiError.forbidden('No tenant scope.');
+    const detail = await reservationRepository.updateStatus(scope, id, status);
     if (!detail) throw ApiError.notFound('Booking not found.');
     return detail;
   },

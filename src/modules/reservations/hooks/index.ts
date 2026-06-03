@@ -1,8 +1,8 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { http } from '@/lib/api';
 import type { Paginated } from '@/types';
-import type { Reservation, ReservationDetail } from '../types';
+import type { Reservation, ReservationDetail, ReservationStatus } from '../types';
 import type { ListReservationsQuery } from '../validation';
 
 export const reservationKeys = {
@@ -16,6 +16,7 @@ function qs(q?: Partial<ListReservationsQuery>) {
   const p = new URLSearchParams();
   if (q.page) p.set('page', String(q.page));
   if (q.status) p.set('status', q.status);
+  if (q.search) p.set('search', q.search);
   const s = p.toString();
   return s ? `?${s}` : '';
 }
@@ -32,5 +33,14 @@ export function useReservation(id?: string) {
     queryKey: reservationKeys.detail(id ?? ''),
     queryFn: () => http.get<ReservationDetail>(`/api/reservations/${id}`),
     enabled: Boolean(id),
+  });
+}
+
+export function useUpdateReservationStatus(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (status: ReservationStatus) =>
+      http.patch<ReservationDetail>(`/api/reservations/${id}`, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: reservationKeys.all }),
   });
 }

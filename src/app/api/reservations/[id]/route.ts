@@ -15,3 +15,15 @@ export async function GET(_request: NextRequest, { params }: Context) {
     return fail(error);
   }
 }
+
+export async function PATCH(request: NextRequest, { params }: Context) {
+  try {
+    const actor = await getCurrentActor();
+    if (!actor) throw ApiError.unauthorized();
+    const { id } = await params;
+    const body = await request.json();
+    return ok(await reservationApi.updateStatus(actor, id, body));
+  } catch (error) {
+    return fail(error);
+  }
+}

@@ -1,11 +1,12 @@
 'use client';
 
-import { Calendar, Mail, MapPin, Phone, User } from 'lucide-react';
+import { Calendar, Check, Mail, MapPin, Phone, User, X } from 'lucide-react';
 
-import { Modal, StatusBadge } from '@/components/ui';
+import { Button, Modal, StatusBadge } from '@/components/ui';
 import { fromMinorUnits } from '@/constants';
 
-import { useReservation } from '../hooks';
+import { useReservation, useUpdateReservationStatus } from '../hooks';
+import type { ReservationStatus } from '../types';
 
 function money(cents: number, currency: string): string {
   return `${fromMinorUnits(cents, currency).toLocaleString(undefined, {
@@ -45,12 +46,52 @@ export function BookingDetailModal({
   onClose: () => void;
 }) {
   const { data, isLoading, isError, error } = useReservation(id ?? undefined);
+  const update = useUpdateReservationStatus(id ?? '');
+
+  const act = (status: ReservationStatus) => update.mutate(status);
+
+  // Allowed transitions per current status.
+  const actions: { label: string; to: ReservationStatus; icon: typeof Check; variant: 'default' | 'outline' | 'destructive' }[] =
+    data?.status === 'PENDING'
+      ? [
+          { label: 'Approve', to: 'CONFIRMED', icon: Check, variant: 'default' },
+          { label: 'Reject', to: 'CANCELLED', icon: X, variant: 'destructive' },
+        ]
+      : data?.status === 'CONFIRMED'
+        ? [
+            { label: 'Mark completed', to: 'COMPLETED', icon: Check, variant: 'default' },
+            { label: 'Cancel', to: 'CANCELLED', icon: X, variant: 'destructive' },
+          ]
+        : [];
+
+  const footer =
+    data && actions.length ? (
+      <div className="flex flex-1 items-center justify-between gap-3">
+        <span className="text-muted-foreground text-xs">
+          {update.isError ? (update.error as Error).message : 'Update the booking status'}
+        </span>
+        <div className="flex gap-2">
+          {actions.map((a) => (
+            <Button
+              key={a.to}
+              variant={a.variant}
+              onClick={() => act(a.to)}
+              disabled={update.isPending}
+            >
+              <a.icon className="size-4" />
+              {a.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+    ) : undefined;
 
   return (
     <Modal
       open={open}
       onClose={onClose}
       size="lg"
+      footer={footer}
       title={
         data ? (
           <div className="flex flex-wrap items-center gap-2">

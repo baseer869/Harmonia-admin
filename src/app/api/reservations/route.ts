@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
       page: Number(sp.get('page') ?? 1),
       pageSize: Number(sp.get('pageSize') ?? 20),
       status: status as never,
+      search: sp.get('search') ?? undefined,
       tenantId: sp.get('tenantId') ?? undefined,
     }));
   } catch (error) {

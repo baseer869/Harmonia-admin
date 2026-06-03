@@ -96,22 +96,29 @@ function buildColumns(onView: (id: string) => void): ColumnDef<Reservation>[] {
   ];
 }
 
-export function ReservationsTable() {
-  const { data, isLoading, isError, error } = useReservations();
+export function ReservationsTable({
+  status,
+  search,
+}: {
+  status?: Reservation['status'];
+  search?: string;
+}) {
+  const { data, isLoading, isError, error } = useReservations({ status, search });
   const [viewId, setViewId] = useState<string | null>(null);
-
-  if (isLoading)
-    return <p className="text-muted-foreground p-4 text-sm">Loading bookings…</p>;
-  if (isError)
-    return <p className="text-destructive p-4 text-sm">{(error as Error).message}</p>;
 
   return (
     <>
-      <DataTable
-        columns={buildColumns(setViewId)}
-        data={data?.items ?? []}
-        emptyMessage="No bookings yet."
-      />
+      {isLoading ? (
+        <p className="text-muted-foreground p-4 text-sm">Loading bookings…</p>
+      ) : isError ? (
+        <p className="text-destructive p-4 text-sm">{(error as Error).message}</p>
+      ) : (
+        <DataTable
+          columns={buildColumns(setViewId)}
+          data={data?.items ?? []}
+          emptyMessage={search || status ? 'No bookings match your filters.' : 'No bookings yet.'}
+        />
+      )}
       <BookingDetailModal
         id={viewId}
         open={viewId !== null}

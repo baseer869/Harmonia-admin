@@ -1,12 +1,25 @@
 import { z } from 'zod';
 
+export const reservationStatusSchema = z.enum([
+  'PENDING',
+  'CONFIRMED',
+  'CANCELLED',
+  'COMPLETED',
+]);
+
 export const listReservationsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
+  status: reservationStatusSchema.optional(),
+  search: z.string().trim().min(1).optional(),
   tenantId: z.string().optional(),
 });
 export type ListReservationsQuery = z.infer<typeof listReservationsQuerySchema>;
+
+export const updateReservationStatusSchema = z.object({
+  status: reservationStatusSchema,
+});
+export type UpdateReservationStatusInput = z.infer<typeof updateReservationStatusSchema>;
 
 /** A line in a booking request (one chosen service). */
 export const bookingItemSchema = z.object({

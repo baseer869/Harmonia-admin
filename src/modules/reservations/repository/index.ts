@@ -24,10 +24,28 @@ export interface BookingResult {
 }
 
 export const reservationRepository = {
-  async findMany(args: { tenantId?: string; status?: Reservation['status']; skip: number; take: number }) {
-    const where = {
+  async findMany(args: {
+    tenantId?: string;
+    status?: Reservation['status'];
+    search?: string;
+    skip: number;
+    take: number;
+  }) {
+    const mode = 'insensitive' as const;
+    const where: Prisma.ReservationWhereInput = {
       ...(args.tenantId ? { tenantId: args.tenantId } : {}),
       ...(args.status ? { status: args.status } : {}),
+      ...(args.search
+        ? {
+            OR: [
+              { code: { contains: args.search, mode } },
+              { customer: { name: { contains: args.search, mode } } },
+              { customer: { email: { contains: args.search, mode } } },
+              { customer: { phone: { contains: args.search, mode } } },
+              { items: { some: { title: { contains: args.search, mode } } } },
+            ],
+          }
+        : {}),
     };
     const [rows, total] = await Promise.all([
       prisma.reservation.findMany({
@@ -84,6 +102,20 @@ export const reservationRepository = {
       createdAt: r.createdAt.toISOString(),
       items,
     };
+  },
+
+  /** Update a booking's status (tenant-scoped). Returns the refreshed detail. */
+  async updateStatus(
+    tenantId: string | undefined,
+    id: string,
+    status: Reservation['status'],
+  ): Promise<ReservationDetail | null> {
+    const res = await prisma.reservation.updateMany({
+      where: { id, ...(tenantId ? { tenantId } : {}) },
+      data: { status },
+    });
+    if (res.count === 0) return null;
+    return this.findById(tenantId, id);
   },
 
   async tenantIdBySlug(slug: string): Promise<string | null> {
