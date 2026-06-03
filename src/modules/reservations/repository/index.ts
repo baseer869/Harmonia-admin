@@ -2,8 +2,17 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
 import { ApiError } from '@/lib/api';
-import type { Reservation } from '../types';
+import type { Reservation, ReservationDetail, ReservationItemDetail } from '../types';
 import type { BookingItemInput } from '../validation';
+
+type ExtrasJson = { name: string; priceCents: number }[];
+
+function summarize(items: { title: string }[]): string {
+  const first = items[0];
+  if (!first) return '—';
+  const rest = items.length - 1;
+  return rest > 0 ? `${first.title} +${rest}` : first.title;
+}
 
 export interface BookingResult {
   id: string;
@@ -23,18 +32,58 @@ export const reservationRepository = {
     const [rows, total] = await Promise.all([
       prisma.reservation.findMany({
         where, skip: args.skip, take: args.take, orderBy: { createdAt: 'desc' },
-        include: { customer: { select: { email: true } } },
+        include: {
+          customer: { select: { name: true, email: true, phone: true } },
+          items: { select: { title: true } },
+        },
       }),
       prisma.reservation.count({ where }),
     ]);
     const items: Reservation[] = rows.map((r) => ({
       id: r.id, tenantId: r.tenantId, code: r.code, status: r.status,
       totalCents: r.totalCents, currency: r.currency,
+      customerName: r.customer?.name ?? null,
       customerEmail: r.customer?.email ?? null,
+      customerPhone: r.customer?.phone ?? null,
+      itemsCount: r.items.length,
+      itemsSummary: summarize(r.items),
       scheduledAt: r.scheduledAt ? r.scheduledAt.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
     }));
     return { items, total };
+  },
+
+  /** Full booking detail (customer + line items) for the admin view. */
+  async findById(tenantId: string | undefined, id: string): Promise<ReservationDetail | null> {
+    const r = await prisma.reservation.findFirst({
+      where: { id, ...(tenantId ? { tenantId } : {}) },
+      include: {
+        customer: { select: { name: true, email: true, phone: true, city: true } },
+        items: { orderBy: { id: 'asc' } },
+      },
+    });
+    if (!r) return null;
+    const items: ReservationItemDetail[] = r.items.map((it) => ({
+      title: it.title,
+      quantity: it.quantity,
+      unitPriceCents: it.unitPriceCents,
+      scheduledAt: it.scheduledAt ? it.scheduledAt.toISOString() : null,
+      extras: (it.extrasJson as ExtrasJson | null) ?? [],
+    }));
+    return {
+      id: r.id, tenantId: r.tenantId, code: r.code, status: r.status,
+      totalCents: r.totalCents, subtotalCents: r.subtotalCents, discountCents: r.discountCents,
+      currency: r.currency, notes: r.notes,
+      customerName: r.customer?.name ?? null,
+      customerEmail: r.customer?.email ?? null,
+      customerPhone: r.customer?.phone ?? null,
+      customerCity: r.customer?.city ?? null,
+      itemsCount: items.length,
+      itemsSummary: summarize(items),
+      scheduledAt: r.scheduledAt ? r.scheduledAt.toISOString() : null,
+      createdAt: r.createdAt.toISOString(),
+      items,
+    };
   },
 
   async tenantIdBySlug(slug: string): Promise<string | null> {

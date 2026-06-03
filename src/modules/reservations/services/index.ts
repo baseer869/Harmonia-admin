@@ -8,7 +8,7 @@ import {
   type CreateBookingInput,
   type ListReservationsQuery,
 } from '../validation';
-import type { Reservation } from '../types';
+import type { Reservation, ReservationDetail } from '../types';
 
 export const reservationService = {
   async list(actor: Actor, query: ListReservationsQuery): Promise<Paginated<Reservation>> {
@@ -20,6 +20,15 @@ export const reservationService = {
       tenantId: scope, status, skip: (page - 1) * pageSize, take: pageSize,
     });
     return { items, total, page, pageSize };
+  },
+
+  async get(actor: Actor, id: string): Promise<ReservationDetail> {
+    assertCan(actor, 'read', 'reservation');
+    const scope = actor.role === 'SUPER_ADMIN' ? undefined : (actor.tenantId ?? undefined);
+    if (actor.role !== 'SUPER_ADMIN' && !scope) throw ApiError.forbidden('No tenant scope.');
+    const detail = await reservationRepository.findById(scope, id);
+    if (!detail) throw ApiError.notFound('Booking not found.');
+    return detail;
   },
 };
 
