@@ -9,9 +9,13 @@ interface PageHeaderProps {
   description?: string;
   actions?: React.ReactNode;
   className?: string;
-  /** Show the solid-black back arrow beside the title (default: true). */
+  /**
+   * Show a back arrow beside the title. OFF by default — top-level pages are
+   * reached from the sidebar and a history `back()` there just cycles. Enable
+   * it on sub-pages and pass an explicit `backHref` for reliable navigation.
+   */
   showBack?: boolean;
-  /** Explicit back target; defaults to history back when omitted. */
+  /** Explicit back target (a real link — never a history loop). */
   backHref?: Route;
   children?: React.ReactNode;
 }
@@ -22,7 +26,7 @@ export function PageHeader({
   description,
   actions,
   className,
-  showBack = true,
+  showBack = false,
   backHref,
   children,
 }: PageHeaderProps) {

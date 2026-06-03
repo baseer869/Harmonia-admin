@@ -123,6 +123,15 @@
     @apply tracking-tight;
     color: var(--foreground);
   }
+  /* Tailwind v4 makes buttons `cursor: default`; restore the pointer on all
+     interactive elements so clickable controls read as clickable. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  label[for],
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* Flat enterprise canvas (no gradients). */
