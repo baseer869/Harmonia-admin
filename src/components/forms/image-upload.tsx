@@ -5,6 +5,34 @@ import { ImagePlus, Loader2, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Resize a picked image to a max dimension and re-encode as JPEG before upload.
+ * Keeps the request (and any data-URL fallback) small — well under serverless
+ * body limits — and avoids huge originals. SVG/GIF pass through untouched.
+ */
+async function compressImage(file: File, maxDim: number, quality = 0.82): Promise<File> {
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', quality));
+    if (!blob) return file;
+    const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], name, { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
 /** Image upload with inline preview. Saves via /api/admin/upload, returns a URL. */
 export function ImageUpload({
   value,
@@ -29,8 +57,9 @@ export function ImageUpload({
     setUploading(true);
     setError(null);
     try {
+      const compressed = await compressImage(file, variant === 'cover' ? 1600 : 600);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressed);
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: fd,
