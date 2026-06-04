@@ -22,6 +22,7 @@ interface Dict {
     status: string; active: string; hidden: string; loading: string; noResults: string;
     name: string; email: string; phone: string; city: string; total: string;
     created: string; reference: string; close: string;
+    back: string; next: string; saving: string;
   };
   status: { PENDING: string; CONFIRMED: string; CANCELLED: string; COMPLETED: string };
   bookings: {
@@ -80,7 +81,7 @@ const DICT: Record<Locale, Dict> = {
       actions: 'Actions', status: 'Status', active: 'Active', hidden: 'Hidden',
       loading: 'Loading…', noResults: 'No results.', name: 'Name', email: 'Email',
       phone: 'Phone', city: 'City', total: 'Total', created: 'Created', reference: 'Reference',
-      close: 'Close',
+      close: 'Close', back: 'Back', next: 'Next', saving: 'Saving…',
     },
     status: { PENDING: 'Pending', CONFIRMED: 'Confirmed', CANCELLED: 'Cancelled', COMPLETED: 'Completed' },
     bookings: {
@@ -140,7 +141,7 @@ const DICT: Record<Locale, Dict> = {
       actions: 'Actions', status: 'Statut', active: 'Actif', hidden: 'Masqué',
       loading: 'Chargement…', noResults: 'Aucun résultat.', name: 'Nom', email: 'E-mail',
       phone: 'Téléphone', city: 'Ville', total: 'Total', created: 'Créé le', reference: 'Référence',
-      close: 'Fermer',
+      close: 'Fermer', back: 'Retour', next: 'Suivant', saving: 'Enregistrement…',
     },
     status: { PENDING: 'En attente', CONFIRMED: 'Confirmée', CANCELLED: 'Annulée', COMPLETED: 'Terminée' },
     bookings: {

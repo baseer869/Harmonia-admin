@@ -6,6 +6,7 @@ import { ArrowLeft, Check } from 'lucide-react';
 
 import { Button, Card, CardContent } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 export interface WizardStep {
   id: string;
@@ -41,6 +42,7 @@ export function Wizard({
   submitLabel?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useAdminI18n();
   const isLast = current === steps.length - 1;
 
   return (
@@ -99,14 +101,14 @@ export function Wizard({
 
       <div className="flex items-center gap-3">
         <Button variant="outline" onClick={onBack} disabled={current === 0 || isSubmitting}>
-          Back
+          {t.common.back}
         </Button>
         {isLast ? (
           <Button onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : submitLabel}
+            {isSubmitting ? t.common.saving : submitLabel}
           </Button>
         ) : (
-          <Button onClick={onNext}>Next</Button>
+          <Button onClick={onNext}>{t.common.next}</Button>
         )}
       </div>
     </div>
