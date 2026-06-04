@@ -202,6 +202,7 @@ model Customer {
   name            String?
   phone           String?
   city            String?
+  preferredLocale String? // default language for this customer (e.g. "fr")
   passwordHash    String?
   emailVerifiedAt DateTime?
   status          CustomerStatus @default(ACTIVE)
@@ -310,6 +311,9 @@ model Service {
   thumbUrl     String?
   includedJson Json? // [{ title, description }]
   infoJson     Json? // [{ label, value }]
+  // Per-locale overrides of the human text (default lang = the main columns).
+  // e.g. { "fr": { title, subtitle, description, priceUnit, tags[], options[], extras[], included[], info[] } }
+  translations Json?
 
   active          Boolean @default(true)
   featured        Boolean @default(false)
@@ -435,6 +439,7 @@ model Reservation {
   customerId    String
   customer      Customer          @relation(fields: [customerId], references: [id])
   code          String            @unique // human-friendly reference
+  locale        String            @default("fr") // language the booking was made in (drives docs/emails)
   status        ReservationStatus @default(PENDING)
   subtotalCents Int               @default(0)
   discountCents Int               @default(0)
