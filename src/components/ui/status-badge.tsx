@@ -33,11 +33,21 @@ const MAP: Record<string, Tone> = {
 };
 
 /** Soft, semantic status pill (Pending/Confirmed/Paid…). */
-export function StatusBadge({ status, tone }: { status: string; tone?: Tone }) {
+export function StatusBadge({
+  status,
+  tone,
+  label,
+}: {
+  status: string;
+  tone?: Tone;
+  /** Override the displayed text (e.g. a translated label); tone stays from `status`. */
+  label?: string;
+}) {
   const t = tone ?? MAP[status.toUpperCase()] ?? 'gray';
-  const label =
+  const text =
+    label ??
     status.charAt(0).toUpperCase() +
-    status.slice(1).toLowerCase().replace(/_/g, ' ');
+      status.slice(1).toLowerCase().replace(/_/g, ' ');
   return (
     <span
       className={cn(
@@ -45,7 +55,7 @@ export function StatusBadge({ status, tone }: { status: string; tone?: Tone }) {
         TONES[t],
       )}
     >
-      {label}
+      {text}
     </span>
   );
 }

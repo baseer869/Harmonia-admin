@@ -19,6 +19,7 @@ const STATUS_OPTIONS = [
 export default function TenantsPage() {
   return (
     <PageHeader
+      tkey="tenants"
       title="Tenants"
       description="Create and manage tenant organizations (Super Admin)."
       actions={

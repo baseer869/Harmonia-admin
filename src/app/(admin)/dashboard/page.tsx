@@ -85,6 +85,7 @@ export default async function DashboardPage() {
 
   return (
     <PageHeader
+      tkey="dashboard"
       title="Dashboard"
       showBack={false}
       description={

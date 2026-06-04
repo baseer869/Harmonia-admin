@@ -1,12 +1,17 @@
+'use client';
+
 import * as React from 'react';
 import type { Route } from 'next';
 
 import { cn } from '@/lib/utils';
+import { useAdminI18n } from '@/lib/i18n/provider';
 import { BackButton } from './back-button';
 
 interface PageHeaderProps {
   title: string;
   description?: string;
+  /** Page key for i18n (looks up `pages[tkey]`); falls back to title/description. */
+  tkey?: string;
   actions?: React.ReactNode;
   className?: string;
   /**
@@ -24,12 +29,17 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   description,
+  tkey,
   actions,
   className,
   showBack = false,
   backHref,
   children,
 }: PageHeaderProps) {
+  const { t } = useAdminI18n();
+  const p = tkey ? t.pages[tkey] : undefined;
+  const heading = p?.title ?? title;
+  const sub = p?.desc ?? description;
   return (
     <div className={cn('space-y-8', className)}>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -40,10 +50,10 @@ export function PageHeader({
             </div>
           ) : null}
           <div className="space-y-1.5">
-            <h1 className="page-title">{title}</h1>
-            {description ? (
+            <h1 className="page-title">{heading}</h1>
+            {sub ? (
               <p className="text-muted-foreground max-w-2xl text-[13px]">
-                {description}
+                {sub}
               </p>
             ) : null}
           </div>

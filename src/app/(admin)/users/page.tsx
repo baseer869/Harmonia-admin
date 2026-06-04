@@ -18,6 +18,7 @@ const STATUS_OPTIONS = [
 export default function UsersPage() {
   return (
     <PageHeader
+      tkey="admins"
       title="Users Management"
       description="Manage platform and tenant back-office users."
     >

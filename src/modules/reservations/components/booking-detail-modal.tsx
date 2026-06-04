@@ -4,6 +4,7 @@ import { Calendar, Check, Mail, MapPin, Phone, User, X } from 'lucide-react';
 
 import { Button, Modal, StatusBadge } from '@/components/ui';
 import { fromMinorUnits } from '@/constants';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useReservation, useUpdateReservationStatus } from '../hooks';
 import type { ReservationStatus } from '../types';
@@ -45,6 +46,7 @@ export function BookingDetailModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useAdminI18n();
   const { data, isLoading, isError, error } = useReservation(id ?? undefined);
   const update = useUpdateReservationStatus(id ?? '');
 
@@ -54,13 +56,13 @@ export function BookingDetailModal({
   const actions: { label: string; to: ReservationStatus; icon: typeof Check; variant: 'default' | 'outline' | 'destructive' }[] =
     data?.status === 'PENDING'
       ? [
-          { label: 'Approve', to: 'CONFIRMED', icon: Check, variant: 'default' },
-          { label: 'Reject', to: 'CANCELLED', icon: X, variant: 'destructive' },
+          { label: t.bookings.approve, to: 'CONFIRMED', icon: Check, variant: 'default' },
+          { label: t.bookings.reject, to: 'CANCELLED', icon: X, variant: 'destructive' },
         ]
       : data?.status === 'CONFIRMED'
         ? [
-            { label: 'Mark completed', to: 'COMPLETED', icon: Check, variant: 'default' },
-            { label: 'Cancel', to: 'CANCELLED', icon: X, variant: 'destructive' },
+            { label: t.bookings.markCompleted, to: 'COMPLETED', icon: Check, variant: 'default' },
+            { label: t.bookings.cancel, to: 'CANCELLED', icon: X, variant: 'destructive' },
           ]
         : [];
 
@@ -68,7 +70,7 @@ export function BookingDetailModal({
     data && actions.length ? (
       <div className="flex flex-1 items-center justify-between gap-3">
         <span className="text-muted-foreground text-xs">
-          {update.isError ? (update.error as Error).message : 'Update the booking status'}
+          {update.isError ? (update.error as Error).message : t.bookings.updateHint}
         </span>
         <div className="flex gap-2">
           {actions.map((a) => (
@@ -96,38 +98,38 @@ export function BookingDetailModal({
         data ? (
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="section-title font-mono">{data.code}</h2>
-            <StatusBadge status={data.status} />
+            <StatusBadge status={data.status} label={t.status[data.status]} />
           </div>
         ) : (
-          'Booking'
+          t.pages.bookings?.title ?? 'Booking'
         )
       }
     >
-      {isLoading && <p className="text-muted-foreground text-sm">Loading booking…</p>}
+      {isLoading && <p className="text-muted-foreground text-sm">{t.bookings.loading}</p>}
       {isError && <p className="text-destructive text-sm">{(error as Error).message}</p>}
 
       {data && (
         <div className="space-y-6">
           {/* Customer */}
           <section>
-            <h3 className="mb-3 text-sm font-semibold">Customer</h3>
+            <h3 className="mb-3 text-sm font-semibold">{t.bookings.detailCustomer}</h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <Info icon={User} label="Name" value={data.customerName || '—'} />
-              <Info icon={Mail} label="Email" value={data.customerEmail || '—'} />
-              <Info icon={Phone} label="Phone" value={data.customerPhone || '—'} />
-              <Info icon={MapPin} label="City" value={data.customerCity || '—'} />
+              <Info icon={User} label={t.common.name} value={data.customerName || '—'} />
+              <Info icon={Mail} label={t.common.email} value={data.customerEmail || '—'} />
+              <Info icon={Phone} label={t.common.phone} value={data.customerPhone || '—'} />
+              <Info icon={MapPin} label={t.common.city} value={data.customerCity || '—'} />
             </div>
           </section>
 
           {/* Schedule */}
           <section className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Info icon={Calendar} label="Scheduled" value={fmtDate(data.scheduledAt)} />
-            <Info icon={Calendar} label="Booked on" value={fmtDate(data.createdAt)} />
+            <Info icon={Calendar} label={t.bookings.detailSchedule} value={fmtDate(data.scheduledAt)} />
+            <Info icon={Calendar} label={t.bookings.detailBookedOn} value={fmtDate(data.createdAt)} />
           </section>
 
           {/* Items */}
           <section>
-            <h3 className="mb-2 text-sm font-semibold">Items ({data.itemsCount})</h3>
+            <h3 className="mb-2 text-sm font-semibold">{t.bookings.detailItems} ({data.itemsCount})</h3>
             <div className="divide-y rounded-lg border">
               {data.items.map((it, idx) => (
                 <div key={idx} className="px-4 py-3">
@@ -156,7 +158,7 @@ export function BookingDetailModal({
           {/* Notes */}
           {data.notes && (
             <section>
-              <h3 className="mb-1 text-sm font-semibold">Notes</h3>
+              <h3 className="mb-1 text-sm font-semibold">{t.bookings.detailNotes}</h3>
               <p className="text-muted-foreground text-sm whitespace-pre-line">{data.notes}</p>
             </section>
           )}
@@ -164,17 +166,17 @@ export function BookingDetailModal({
           {/* Totals */}
           <section className="ml-auto max-w-xs space-y-1.5">
             <div className="text-muted-foreground flex justify-between text-sm">
-              <span>Subtotal</span>
+              <span>{t.bookings.subtotal}</span>
               <span>{money(data.subtotalCents, data.currency)}</span>
             </div>
             {data.discountCents > 0 && (
               <div className="text-muted-foreground flex justify-between text-sm">
-                <span>Discount</span>
+                <span>{t.bookings.discount}</span>
                 <span>− {money(data.discountCents, data.currency)}</span>
               </div>
             )}
             <div className="flex justify-between border-t pt-1.5 text-base font-semibold">
-              <span>Total</span>
+              <span>{t.common.total}</span>
               <span>{money(data.totalCents, data.currency)}</span>
             </div>
           </section>

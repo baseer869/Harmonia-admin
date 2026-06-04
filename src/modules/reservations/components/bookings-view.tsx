@@ -4,23 +4,25 @@ import { useEffect, useState } from 'react';
 
 import { ListingCard } from '@/components/layouts';
 import { SearchInput, SelectFilter } from '@/components/ui';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import type { ReservationStatus } from '../types';
 import { ReservationsTable } from './reservations-table';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'CONFIRMED', label: 'Confirmed' },
-  { value: 'CANCELLED', label: 'Cancelled' },
-  { value: 'COMPLETED', label: 'Completed' },
-];
-
 /** Bookings listing with working status filter + debounced search. */
 export function BookingsView() {
+  const { t } = useAdminI18n();
   const [status, setStatus] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+
+  const statusOptions = [
+    { value: '', label: t.common.allStatuses },
+    { value: 'PENDING', label: t.status.PENDING },
+    { value: 'CONFIRMED', label: t.status.CONFIRMED },
+    { value: 'CANCELLED', label: t.status.CANCELLED },
+    { value: 'COMPLETED', label: t.status.COMPLETED },
+  ];
 
   // Debounce the search box so we don't refetch on every keystroke.
   useEffect(() => {
@@ -30,16 +32,16 @@ export function BookingsView() {
 
   return (
     <ListingCard
-      title="Bookings Listing"
+      title={t.bookings.listing}
       filters={
         <>
           <SelectFilter
-            options={STATUS_OPTIONS}
+            options={statusOptions}
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           />
           <SearchInput
-            placeholder="Search reference, customer, service…"
+            placeholder={t.bookings.searchPlaceholder}
             className="sm:w-[320px]"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}

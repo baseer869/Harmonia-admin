@@ -11,6 +11,7 @@ import { TenantProfileForm } from '@/modules/settings';
 export default function SettingsPage() {
   return (
     <PageHeader
+      tkey="settings"
       title="Settings"
       description="Manage your tenant profile."
     >

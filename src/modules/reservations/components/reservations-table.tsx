@@ -7,10 +7,13 @@ import { Eye } from 'lucide-react';
 import { StatusBadge } from '@/components/ui';
 import { DataTable } from '@/components/tables';
 import { fromMinorUnits } from '@/constants';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useReservations } from '../hooks';
 import type { Reservation } from '../types';
 import { BookingDetailModal } from './booking-detail-modal';
+
+type Dict = ReturnType<typeof useAdminI18n>['t'];
 
 function money(cents: number, currency: string): string {
   return `${fromMinorUnits(cents, currency).toLocaleString(undefined, {
@@ -23,19 +26,19 @@ function fmtDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString() : '—';
 }
 
-function buildColumns(onView: (id: string) => void): ColumnDef<Reservation>[] {
+function buildColumns(onView: (id: string) => void, t: Dict): ColumnDef<Reservation>[] {
   return [
     {
       accessorKey: 'code',
-      header: 'Reference',
+      header: t.common.reference,
       cell: ({ row }) => <span className="font-mono text-xs">{row.original.code}</span>,
     },
     {
       accessorKey: 'customerName',
-      header: 'Customer',
+      header: t.bookings.customer,
       cell: ({ row }) => (
         <div className="min-w-0">
-          <div className="truncate font-medium">{row.original.customerName ?? 'Guest'}</div>
+          <div className="truncate font-medium">{row.original.customerName ?? t.bookings.guest}</div>
           <div className="text-muted-foreground truncate text-xs">
             {row.original.customerEmail ?? '—'}
           </div>
@@ -44,44 +47,46 @@ function buildColumns(onView: (id: string) => void): ColumnDef<Reservation>[] {
     },
     {
       accessorKey: 'customerPhone',
-      header: 'Phone',
+      header: t.bookings.phone,
       cell: ({ row }) => row.original.customerPhone ?? '—',
     },
     {
       accessorKey: 'itemsSummary',
-      header: 'Services',
+      header: t.bookings.services,
       cell: ({ row }) => (
         <div className="min-w-0">
           <div className="truncate">{row.original.itemsSummary}</div>
           <div className="text-muted-foreground text-xs">
-            {row.original.itemsCount} item{row.original.itemsCount === 1 ? '' : 's'}
+            {row.original.itemsCount} {t.bookings.items}
           </div>
         </div>
       ),
     },
     {
       accessorKey: 'scheduledAt',
-      header: 'Scheduled',
+      header: t.bookings.scheduled,
       cell: ({ row }) => fmtDate(row.original.scheduledAt),
     },
     {
       accessorKey: 'totalCents',
-      header: 'Total',
+      header: t.common.total,
       cell: ({ row }) => money(row.original.totalCents, row.original.currency),
     },
     {
       accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      header: t.common.status,
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.status} label={t.status[row.original.status]} />
+      ),
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: t.common.created,
       cell: ({ row }) => fmtDate(row.original.createdAt),
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t.common.actions,
       cell: ({ row }) => (
         <button
           type="button"
@@ -103,20 +108,21 @@ export function ReservationsTable({
   status?: Reservation['status'];
   search?: string;
 }) {
+  const { t } = useAdminI18n();
   const { data, isLoading, isError, error } = useReservations({ status, search });
   const [viewId, setViewId] = useState<string | null>(null);
 
   return (
     <>
       {isLoading ? (
-        <p className="text-muted-foreground p-4 text-sm">Loading bookings…</p>
+        <p className="text-muted-foreground p-4 text-sm">{t.bookings.loading}</p>
       ) : isError ? (
         <p className="text-destructive p-4 text-sm">{(error as Error).message}</p>
       ) : (
         <DataTable
-          columns={buildColumns(setViewId)}
+          columns={buildColumns(setViewId, t)}
           data={data?.items ?? []}
-          emptyMessage={search || status ? 'No bookings match your filters.' : 'No bookings yet.'}
+          emptyMessage={search || status ? t.bookings.emptyFiltered : t.bookings.empty}
         />
       )}
       <BookingDetailModal

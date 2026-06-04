@@ -10,10 +10,13 @@ import { Eye, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/ui';
 import { DataTable } from '@/components/tables';
 import { fromMinorUnits } from '@/constants';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useServices } from '../hooks';
 import type { Service } from '../types';
 import { ServicePreview } from './service-preview';
+
+type Dict = ReturnType<typeof useAdminI18n>['t'];
 
 function formatPrice(cents: number, currency: string): string {
   return `${fromMinorUnits(cents, currency).toLocaleString(undefined, {
@@ -22,12 +25,12 @@ function formatPrice(cents: number, currency: string): string {
   })} ${currency}`;
 }
 
-function buildColumns(onPreview: (s: Service) => void): ColumnDef<Service>[] {
+function buildColumns(onPreview: (s: Service) => void, t: Dict): ColumnDef<Service>[] {
   return [
-    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'title', header: t.services.title },
     {
       accessorKey: 'slug',
-      header: 'Slug',
+      header: t.services.slug,
       cell: ({ row }) => (
         <span className="text-muted-foreground font-mono text-xs">
           {row.original.slug}
@@ -36,25 +39,26 @@ function buildColumns(onPreview: (s: Service) => void): ColumnDef<Service>[] {
     },
     {
       accessorKey: 'priceCents',
-      header: 'Price',
+      header: t.services.price,
       cell: ({ row }) =>
         row.original.type === 'QUOTE'
-          ? 'On request'
+          ? t.services.onRequest
           : formatPrice(row.original.priceCents, row.original.currency),
     },
     {
       accessorKey: 'active',
-      header: 'Status',
+      header: t.common.status,
       cell: ({ row }) => (
         <StatusBadge
           status={row.original.active ? 'Active' : 'Hidden'}
           tone={row.original.active ? 'green' : 'gray'}
+          label={row.original.active ? t.common.active : t.common.hidden}
         />
       ),
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t.common.actions,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <button
@@ -80,11 +84,12 @@ function buildColumns(onPreview: (s: Service) => void): ColumnDef<Service>[] {
 
 /** The tenant's own service catalog (scoped server-side by tenantId). */
 export function ServicesTable() {
+  const { t } = useAdminI18n();
   const { data, isLoading, isError, error } = useServices();
   const [preview, setPreview] = useState<Service | null>(null);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading services…</p>;
+    return <p className="text-muted-foreground text-sm">{t.services.loading}</p>;
   }
   if (isError) {
     return <p className="text-destructive text-sm">{(error as Error).message}</p>;
@@ -93,9 +98,9 @@ export function ServicesTable() {
   return (
     <>
       <DataTable
-        columns={buildColumns(setPreview)}
+        columns={buildColumns(setPreview, t)}
         data={data?.items ?? []}
-        emptyMessage="No services yet. Add the first one to your catalog."
+        emptyMessage={t.services.empty}
       />
       <ServicePreview
         service={preview}

@@ -18,6 +18,7 @@ const STATUS_OPTIONS = [
 export default function ServicesPage() {
   return (
     <PageHeader
+      tkey="services"
       title="Services"
       description="The services your business offers. Managed per tenant."
       actions={

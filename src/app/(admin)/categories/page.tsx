@@ -4,7 +4,7 @@ import { CategoriesTable, CreateCategoryForm } from '@/modules/categories';
 
 export default function CategoriesPage() {
   return (
-    <PageHeader title="Categories" description="Organize your services (up to two levels).">
+    <PageHeader tkey="categories" title="Categories" description="Organize your services (up to two levels).">
       <Card>
         <CardHeader>
           <CardTitle>Add category</CardTitle>

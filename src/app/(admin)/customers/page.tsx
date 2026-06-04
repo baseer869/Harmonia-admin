@@ -11,6 +11,7 @@ const STATUS_OPTIONS = [
 export default function CustomersPage() {
   return (
     <PageHeader
+      tkey="appUsers"
       title="Users Management"
       description="App users (customer accounts)."
     >
