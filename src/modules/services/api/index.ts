@@ -41,10 +41,10 @@ export const serviceApi = {
 
 /** Public catalog API (no auth) — consumed by the client website. */
 export const publicServiceApi = {
-  list(tenantSlug: string, query: ListServicesQuery): Promise<Paginated<Service>> {
-    return publicServiceCatalog.list(tenantSlug, query);
+  list(tenantSlug: string, query: ListServicesQuery, locale?: string): Promise<Paginated<Service>> {
+    return publicServiceCatalog.list(tenantSlug, query, locale);
   },
-  getBySlug(tenantSlug: string, serviceSlug: string): Promise<Service> {
-    return publicServiceCatalog.getBySlug(tenantSlug, serviceSlug);
+  getBySlug(tenantSlug: string, serviceSlug: string, locale?: string): Promise<Service> {
+    return publicServiceCatalog.getBySlug(tenantSlug, serviceSlug, locale);
   },
 };

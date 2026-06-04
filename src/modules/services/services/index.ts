@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import type { Actor, Paginated } from '@/types';
 
 import { serviceRepository } from '../repository';
+import { resolveServiceLocale } from '../locale';
 import {
   createServiceSchema,
   listServicesQuerySchema,
@@ -96,6 +97,7 @@ export const serviceCatalogService = {
       extras: d.extras,
       included: d.included,
       info: d.info,
+      translations: d.translations ?? null,
     });
   },
 
@@ -135,6 +137,7 @@ export const serviceCatalogService = {
       extras: d.extras,
       included: d.included,
       info: d.info,
+      translations: d.translations ?? null,
     });
     if (!updated) throw ApiError.notFound('Service not found.');
     return updated;
@@ -153,7 +156,11 @@ export const serviceCatalogService = {
  * website); only ACTIVE services of an ACTIVE tenant are exposed.
  */
 export const publicServiceCatalog = {
-  async list(tenantSlug: string, query: ListServicesQuery): Promise<Paginated<Service>> {
+  async list(
+    tenantSlug: string,
+    query: ListServicesQuery,
+    locale?: string,
+  ): Promise<Paginated<Service>> {
     const tenantId = await serviceRepository.tenantIdBySlug(tenantSlug);
     if (!tenantId) throw ApiError.notFound('Unknown tenant.');
     const { page, pageSize, search } = listServicesQuerySchema.parse(query);
@@ -163,14 +170,15 @@ export const publicServiceCatalog = {
       take: pageSize,
       search,
     });
-    return { items, total, page, pageSize };
+    const resolved = locale ? items.map((s) => resolveServiceLocale(s, locale)) : items;
+    return { items: resolved, total, page, pageSize };
   },
 
-  async getBySlug(tenantSlug: string, serviceSlug: string): Promise<Service> {
+  async getBySlug(tenantSlug: string, serviceSlug: string, locale?: string): Promise<Service> {
     const tenantId = await serviceRepository.tenantIdBySlug(tenantSlug);
     if (!tenantId) throw ApiError.notFound('Unknown tenant.');
     const svc = await serviceRepository.findActiveBySlug(tenantId, serviceSlug);
     if (!svc) throw ApiError.notFound('Service not found.');
-    return svc;
+    return locale ? resolveServiceLocale(svc, locale) : svc;
   },
 };

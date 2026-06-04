@@ -24,6 +24,20 @@ export interface ServiceMediaItem {
   alt: string | null;
 }
 
+/** Per-locale overrides of a service's human text (default = main columns). */
+export interface ServiceLocaleFields {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  priceUnit?: string;
+  tags?: string[];
+  options?: { name: string }[];
+  extras?: { name: string }[];
+  included?: ServiceIncluded[];
+  info?: ServiceInfo[];
+}
+export type ServiceTranslations = Record<string, ServiceLocaleFields>;
+
 export interface Service {
   id: string;
   tenantId: string;
@@ -58,6 +72,8 @@ export interface Service {
   options: ServiceOptionItem[];
   extras: ServiceExtraItem[];
   media: ServiceMediaItem[];
+
+  translations: ServiceTranslations | null;
 
   createdAt: string;
   updatedAt: string;

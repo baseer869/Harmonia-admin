@@ -67,6 +67,7 @@ interface Dict {
     rType: string; rTitle: string; rPrice: string; rOptions: string; rExtras: string;
     rIncluded: string; onQuote: string; noCover: string; untitled: string;
     accepted: string; acceptedHint: string;
+    stFrench: string; translateBtn: string; translating: string; frHint: string;
   };
   /** Inline Add-user / Add-category forms. */
   forms: {
@@ -166,6 +167,8 @@ const DICT: Record<Locale, Dict> = {
       rType: 'Type', rTitle: 'Title', rPrice: 'Price', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Included', onQuote: 'On quote', noCover: 'No cover image', untitled: 'Untitled service',
       accepted: 'Accepted currencies', acceptedHint: 'Currencies customers can pay in (base currency always included)',
+      stFrench: 'Français', translateBtn: 'Auto-translate from English', translating: 'Translating…',
+      frHint: 'French is required. Click translate, then review/edit.',
     },
     forms: {
       password: 'Password', add: 'Add', adding: 'Adding…',
@@ -263,6 +266,8 @@ const DICT: Record<Locale, Dict> = {
       rType: 'Type', rTitle: 'Titre', rPrice: 'Prix', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Inclus', onQuote: 'Sur devis', noCover: 'Pas de couverture', untitled: 'Service sans titre',
       accepted: 'Devises acceptées', acceptedHint: 'Devises de paiement (la devise de base est toujours incluse)',
+      stFrench: 'Français', translateBtn: "Traduire depuis l'anglais", translating: 'Traduction…',
+      frHint: 'Le français est requis. Cliquez sur traduire, puis vérifiez/modifiez.',
     },
     forms: {
       password: 'Mot de passe', add: 'Ajouter', adding: 'Ajout…',

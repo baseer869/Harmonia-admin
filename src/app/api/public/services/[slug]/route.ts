@@ -18,7 +18,8 @@ export async function GET(request: NextRequest, { params }: Context) {
       request.headers.get(TENANT_SLUG_HEADER) ?? request.nextUrl.searchParams.get('tenant');
     if (!tenantSlug) throw ApiError.badRequest('Missing tenant.');
     const { slug } = await params;
-    return withCors(ok(await publicServiceApi.getBySlug(tenantSlug, slug)), origin);
+    const locale = request.nextUrl.searchParams.get('locale') ?? undefined;
+    return withCors(ok(await publicServiceApi.getBySlug(tenantSlug, slug, locale)), origin);
   } catch (error) {
     return withCors(fail(error), origin);
   }

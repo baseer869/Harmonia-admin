@@ -5,6 +5,7 @@ import type {
   Service,
   ServiceIncluded,
   ServiceInfo,
+  ServiceTranslations,
 } from '../types';
 import type { PriceMode, ServiceType } from '../validation';
 
@@ -46,6 +47,7 @@ export interface CreateServiceData {
   extras: { name: string; priceCents: number }[];
   included: ServiceIncluded[];
   info: ServiceInfo[];
+  translations: ServiceTranslations | null;
 }
 
 /** Full update = the create shape; nested relations are rebuilt in place. */
@@ -98,6 +100,7 @@ function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>): Service {
       priceCents: e.priceCents,
     })),
     media: (r.media ?? []).map((m) => ({ url: m.url, type: m.type, alt: m.alt })),
+    translations: (r.translations as ServiceTranslations | null) ?? null,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };
@@ -178,7 +181,7 @@ export const serviceRepository = {
   },
 
   async create(tenantId: string, data: CreateServiceData): Promise<Service> {
-    const { options, extras, included, info, categoryId, ...scalars } = data;
+    const { options, extras, included, info, categoryId, translations, ...scalars } = data;
     const row = await prisma.service.create({
       data: {
         tenantId,
@@ -186,6 +189,7 @@ export const serviceRepository = {
         ...scalars,
         includedJson: included as unknown as Prisma.InputJsonValue,
         infoJson: info as unknown as Prisma.InputJsonValue,
+        ...(translations ? { translations: translations as unknown as Prisma.InputJsonValue } : {}),
         options: {
           create: options.map((o, i) => ({ ...o, sortOrder: i })),
         },
@@ -205,7 +209,7 @@ export const serviceRepository = {
     });
     if (!exists) return null;
 
-    const { options, extras, included, info, categoryId, ...scalars } = data;
+    const { options, extras, included, info, categoryId, translations, ...scalars } = data;
     await prisma.$transaction([
       prisma.serviceOption.deleteMany({ where: { serviceId: id } }),
       prisma.serviceExtra.deleteMany({ where: { serviceId: id } }),
@@ -216,6 +220,7 @@ export const serviceRepository = {
           categoryId: categoryId ?? null,
           includedJson: included as unknown as Prisma.InputJsonValue,
           infoJson: info as unknown as Prisma.InputJsonValue,
+          translations: (translations ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           options: { create: options.map((o, i) => ({ ...o, sortOrder: i })) },
           extras: { create: extras.map((e, i) => ({ ...e, sortOrder: i })) },
         },

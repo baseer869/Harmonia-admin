@@ -22,6 +22,7 @@ import {
   toMinorUnits,
 } from '@/constants';
 import { cn } from '@/lib/utils';
+import { http } from '@/lib/api';
 import { useTenants } from '@/modules/tenants';
 import { useCategories } from '@/modules/categories';
 import { useAdminI18n } from '@/lib/i18n/provider';
@@ -34,7 +35,7 @@ const schema = z.object({
   type: z.enum(['EXPERIENCE', 'TRANSFER', 'PRODUCT', 'QUOTE']),
   title: z.string().min(2, 'Required'),
   subtitle: z.string().optional(),
-  description: z.string().optional(),
+  description: z.string().min(1, 'Required'),
   tagsText: z.string().optional(),
   coverUrl: z.string().optional(),
   thumbUrl: z.string().optional(),
@@ -53,6 +54,17 @@ const schema = z.object({
   extras: z.array(z.object({ name: z.string(), price: z.coerce.number() })),
   included: z.array(z.object({ title: z.string(), description: z.string() })),
   info: z.array(z.object({ label: z.string(), value: z.string() })),
+  // French (required) — same text, translated. Nested names mirror EN by index.
+  fr: z.object({
+    title: z.string().min(1, 'Requis'),
+    subtitle: z.string().optional(),
+    description: z.string().min(1, 'Requis'),
+    tagsText: z.string().optional(),
+    options: z.array(z.object({ name: z.string() })).optional(),
+    extras: z.array(z.object({ name: z.string() })).optional(),
+    included: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
+    info: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+  }),
 });
 type Form = z.infer<typeof schema>;
 
@@ -63,6 +75,7 @@ const STEPS: WizardStep[] = [
   { id: 'pricing', label: 'Pricing & Booking' },
   { id: 'options', label: 'Options & Extras' },
   { id: 'details', label: 'Details' },
+  { id: 'fr', label: 'Français' },
   { id: 'review', label: 'Review' },
 ];
 
@@ -104,6 +117,16 @@ function toFormValues(s: Service): Form {
     extras: s.extras.map((e) => ({ name: e.name, price: minor(e.priceCents) })),
     included: s.included.map((i) => ({ title: i.title, description: i.description })),
     info: s.info.map((i) => ({ label: i.label, value: i.value })),
+    fr: {
+      title: s.translations?.fr?.title ?? '',
+      subtitle: s.translations?.fr?.subtitle ?? '',
+      description: s.translations?.fr?.description ?? '',
+      tagsText: (s.translations?.fr?.tags ?? []).join(', '),
+      options: s.translations?.fr?.options ?? [],
+      extras: s.translations?.fr?.extras ?? [],
+      included: s.translations?.fr?.included ?? [],
+      info: s.translations?.fr?.info ?? [],
+    },
   } as Form;
 }
 
@@ -118,6 +141,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
     { id: 'pricing', label: t.svcForm.stPricing },
     { id: 'options', label: t.svcForm.stOptions },
     { id: 'details', label: t.svcForm.stDetails },
+    { id: 'fr', label: t.svcForm.stFrench },
     { id: 'review', label: t.svcForm.stReview },
   ];
   const createService = useCreateService();
@@ -126,6 +150,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const categories = useCategories();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   const form = useForm<Form>({
     resolver: zodResolver(schema),
@@ -145,6 +170,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
           extras: [],
           included: [],
           info: [],
+          fr: { title: '', subtitle: '', description: '', tagsText: '', options: [], extras: [], included: [], info: [] },
         },
   });
   const { register, control, trigger, getValues, setValue, watch, setError, formState } = form;
@@ -161,16 +187,53 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
   const STEP_FIELDS: (keyof Form)[][] = [
     ['tenantId', 'type'],
-    ['title'],
+    ['title', 'description'],
     [],
     isQuote ? ['currency'] : ['price', 'currency'],
     [],
     [],
+    ['fr'],
     [],
   ];
 
   const next = async () => {
     if (await trigger(STEP_FIELDS[step] as never)) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
+
+  // Free machine-translation draft of the English text into French (editable).
+  const translateToFrench = async () => {
+    const v = getValues();
+    const jobs: { path: string; text: string }[] = [];
+    const push = (path: string, text?: string) => {
+      if (text && text.trim()) jobs.push({ path, text });
+    };
+    push('fr.title', v.title);
+    push('fr.subtitle', v.subtitle);
+    push('fr.description', v.description);
+    push('fr.tagsText', v.tagsText);
+    v.options.forEach((o, i) => push(`fr.options.${i}.name`, o.name));
+    v.extras.forEach((e, i) => push(`fr.extras.${i}.name`, e.name));
+    v.included.forEach((it, i) => {
+      push(`fr.included.${i}.title`, it.title);
+      push(`fr.included.${i}.description`, it.description);
+    });
+    v.info.forEach((it, i) => {
+      push(`fr.info.${i}.label`, it.label);
+      push(`fr.info.${i}.value`, it.value);
+    });
+    if (!jobs.length) return;
+    setTranslating(true);
+    try {
+      const { translations } = await http.post<{ translations: string[] }>(
+        '/api/admin/translate',
+        { texts: jobs.map((j) => j.text), to: 'fr' },
+      );
+      jobs.forEach((j, i) => setValue(j.path as never, (translations[i] ?? '') as never));
+    } catch {
+      /* best-effort; admin can type manually */
+    } finally {
+      setTranslating(false);
+    }
   };
 
   const submit = async () => {
@@ -206,6 +269,18 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
         .map((e) => ({ name: e.name, priceCents: toMinorUnits(Number(e.price) || 0, v.currency) })),
       included: v.included.filter((i) => i.title),
       info: v.info.filter((i) => i.label),
+      translations: {
+        fr: {
+          title: v.fr.title,
+          subtitle: v.fr.subtitle || undefined,
+          description: v.fr.description,
+          tags: csv(v.fr.tagsText),
+          options: (v.fr.options ?? []).map((o) => ({ name: o.name })),
+          extras: (v.fr.extras ?? []).map((e) => ({ name: e.name })),
+          included: (v.fr.included ?? []).map((i) => ({ title: i.title, description: i.description })),
+          info: (v.fr.info ?? []).map((i) => ({ label: i.label, value: i.value })),
+        },
+      },
     };
     try {
       if (isEdit) {
@@ -499,7 +574,91 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
         </div>
       )}
 
-      {step === 6 && <ReviewStep v={getValues()} rootError={errors.root?.message} />}
+      {step === 6 && (
+        <div className="space-y-6">
+          <div className="bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+            <p className="text-muted-foreground text-sm">{t.svcForm.frHint}</p>
+            <Button type="button" variant="outline" onClick={translateToFrench} disabled={translating}>
+              {translating ? t.svcForm.translating : t.svcForm.translateBtn}
+            </Button>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+            <Field label={`${t.svcForm.title} (FR)`} required error={errors.fr?.title?.message}>
+              <Input {...register('fr.title')} />
+            </Field>
+            <Field label={`${t.svcForm.subtitle} (FR)`}>
+              <Input {...register('fr.subtitle')} />
+            </Field>
+            <Field
+              label={`${t.svcForm.description} (FR)`}
+              className="md:col-span-2"
+              required
+              error={errors.fr?.description?.message}
+            >
+              <Input {...register('fr.description')} />
+            </Field>
+            <Field label={`${t.svcForm.tags} (FR)`} className="md:col-span-2" hint={t.svcForm.commaSep}>
+              <Input {...register('fr.tagsText')} />
+            </Field>
+          </div>
+
+          {optionsFA.fields.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">{t.svcForm.optionsTitle}</h4>
+              <div className="space-y-2">
+                {optionsFA.fields.map((f, i) => (
+                  <div key={f.id} className="grid grid-cols-2 items-center gap-3">
+                    <span className="text-muted-foreground truncate text-sm">{watch(`options.${i}.name`) || '—'}</span>
+                    <Input placeholder="FR" {...register(`fr.options.${i}.name`)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {extrasFA.fields.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">{t.svcForm.extrasTitle}</h4>
+              <div className="space-y-2">
+                {extrasFA.fields.map((f, i) => (
+                  <div key={f.id} className="grid grid-cols-2 items-center gap-3">
+                    <span className="text-muted-foreground truncate text-sm">{watch(`extras.${i}.name`) || '—'}</span>
+                    <Input placeholder="FR" {...register(`fr.extras.${i}.name`)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {includedFA.fields.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">{t.svcForm.includedTitle}</h4>
+              <div className="space-y-2">
+                {includedFA.fields.map((f, i) => (
+                  <div key={f.id} className="grid grid-cols-2 gap-3">
+                    <Input placeholder="Titre (FR)" {...register(`fr.included.${i}.title`)} />
+                    <Input placeholder="Description (FR)" {...register(`fr.included.${i}.description`)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {infoFA.fields.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">{t.svcForm.practicalTitle}</h4>
+              <div className="space-y-2">
+                {infoFA.fields.map((f, i) => (
+                  <div key={f.id} className="grid grid-cols-2 gap-3">
+                    <Input placeholder="Libellé (FR)" {...register(`fr.info.${i}.label`)} />
+                    <Input placeholder="Valeur (FR)" {...register(`fr.info.${i}.value`)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {step === 7 && <ReviewStep v={getValues()} rootError={errors.root?.message} />}
     </Wizard>
   );
 }

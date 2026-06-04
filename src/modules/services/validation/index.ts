@@ -39,6 +39,19 @@ export const serviceInfoSchema = z.object({
   value: z.string().default(''),
 });
 
+/** A locale's text overrides — every field optional (fall back to default). */
+export const serviceLocaleFieldsSchema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  description: z.string().optional(),
+  priceUnit: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  options: z.array(z.object({ name: z.string() })).optional(),
+  extras: z.array(z.object({ name: z.string() })).optional(),
+  included: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
+  info: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+});
+
 export const createServiceSchema = z.object({
   categoryId: z.string().nullish(),
   type: serviceTypeSchema.default('EXPERIENCE'),
@@ -68,6 +81,9 @@ export const createServiceSchema = z.object({
   extras: z.array(serviceExtraSchema).default([]),
   included: z.array(serviceIncludedSchema).default([]),
   info: z.array(serviceInfoSchema).default([]),
+
+  // Per-locale text overrides (e.g. { fr: { title, description, options[], … } }).
+  translations: z.record(z.string(), serviceLocaleFieldsSchema).optional(),
 });
 
 export const updateServiceSchema = createServiceSchema.partial();
