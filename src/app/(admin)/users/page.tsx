@@ -1,3 +1,5 @@
+'use client';
+
 import { PageHeader, ListingCard } from '@/components/layouts';
 import {
   Card,
@@ -8,14 +10,15 @@ import {
   SelectFilter,
 } from '@/components/ui';
 import { CreateUserForm, UsersTable } from '@/modules/users';
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Sort by Status' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 export default function UsersPage() {
+  const { t } = useAdminI18n();
+  const statusOptions = [
+    { value: '', label: t.common.selectStatus },
+    { value: 'active', label: t.common.active },
+    { value: 'inactive', label: t.lists.inactive },
+  ];
   return (
     <PageHeader
       tkey="admins"
@@ -24,7 +27,7 @@ export default function UsersPage() {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Add user</CardTitle>
+          <CardTitle>{t.lists.addUser}</CardTitle>
         </CardHeader>
         <CardContent>
           <CreateUserForm />
@@ -32,11 +35,11 @@ export default function UsersPage() {
       </Card>
 
       <ListingCard
-        title="Admins Listings"
+        title={t.lists.adminListing}
         filters={
           <>
-            <SelectFilter options={STATUS_OPTIONS} defaultValue="" />
-            <SearchInput placeholder="Search" className="sm:w-[320px]" />
+            <SelectFilter options={statusOptions} defaultValue="" />
+            <SearchInput placeholder={t.common.search} className="sm:w-[320px]" />
           </>
         }
       >

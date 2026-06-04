@@ -36,6 +36,14 @@ interface Dict {
     listing: string; addService: string; title: string; slug: string; price: string;
     onRequest: string; empty: string; loading: string;
   };
+  lists: {
+    tenantListing: string; adminListing: string; appUsersListing: string;
+    categoriesListing: string; addTenant: string; addUser: string; addCategory: string;
+    loadingTenants: string; emptyTenants: string; loadingUsers: string; emptyUsers: string;
+    emptyCustomers: string; emptyCategories: string;
+    suspended: string; archived: string; blocked: string; inactive: string;
+    id: string; slug: string; parent: string;
+  };
 }
 
 const DICT: Record<Locale, Dict> = {
@@ -89,6 +97,15 @@ const DICT: Record<Locale, Dict> = {
       price: 'Price', onRequest: 'On request', empty: 'No services yet. Add the first one to your catalog.',
       loading: 'Loading services…',
     },
+    lists: {
+      tenantListing: 'Tenant Listing', adminListing: 'Admins Listing', appUsersListing: 'App Users Listing',
+      categoriesListing: 'Categories Listing', addTenant: 'Add tenant', addUser: 'Add user', addCategory: 'Add category',
+      loadingTenants: 'Loading tenants…', emptyTenants: 'No tenants yet. Create the first one.',
+      loadingUsers: 'Loading users…', emptyUsers: 'No users yet.',
+      emptyCustomers: 'No customers yet.', emptyCategories: 'No categories yet.',
+      suspended: 'Suspended', archived: 'Archived', blocked: 'Blocked', inactive: 'Inactive',
+      id: 'ID', slug: 'Slug', parent: 'Parent',
+    },
   },
   fr: {
     nav: {
@@ -139,6 +156,15 @@ const DICT: Record<Locale, Dict> = {
       listing: 'Liste des services', addService: 'Ajouter un service', title: 'Titre', slug: 'Slug',
       price: 'Prix', onRequest: 'Sur demande', empty: 'Aucun service. Ajoutez le premier à votre catalogue.',
       loading: 'Chargement des services…',
+    },
+    lists: {
+      tenantListing: 'Liste des locataires', adminListing: 'Liste des admins', appUsersListing: 'Liste des utilisateurs',
+      categoriesListing: 'Liste des catégories', addTenant: 'Ajouter un locataire', addUser: 'Ajouter un utilisateur', addCategory: 'Ajouter une catégorie',
+      loadingTenants: 'Chargement des locataires…', emptyTenants: 'Aucun locataire. Créez le premier.',
+      loadingUsers: 'Chargement…', emptyUsers: 'Aucun utilisateur.',
+      emptyCustomers: 'Aucun client.', emptyCategories: 'Aucune catégorie.',
+      suspended: 'Suspendu', archived: 'Archivé', blocked: 'Bloqué', inactive: 'Inactif',
+      id: 'ID', slug: 'Slug', parent: 'Parent',
     },
   },
 };

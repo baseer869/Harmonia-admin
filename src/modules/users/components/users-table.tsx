@@ -5,9 +5,12 @@ import { Eye, Pencil } from 'lucide-react';
 
 import { Switch } from '@/components/ui';
 import { DataTable } from '@/components/tables';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useUpdateUser, useUsers } from '../hooks';
 import type { AdminUser } from '../types';
+
+type Dict = ReturnType<typeof useAdminI18n>['t'];
 
 function UserActions({ user }: { user: AdminUser }) {
   const update = useUpdateUser();
@@ -37,48 +40,51 @@ function UserActions({ user }: { user: AdminUser }) {
   );
 }
 
-const columns: ColumnDef<AdminUser>[] = [
-  {
-    id: 'rowId',
-    header: 'ID',
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.index + 1}</span>
-    ),
-  },
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => row.original.name ?? '—',
-  },
-  { accessorKey: 'email', header: 'Email ID' },
-  {
-    accessorKey: 'phone',
-    header: 'Phone',
-    cell: ({ row }) => row.original.phone ?? '—',
-  },
-  {
-    accessorKey: 'city',
-    header: 'City',
-    cell: ({ row }) => row.original.city ?? '—',
-  },
-  {
-    id: 'actions',
-    header: 'Actions',
-    cell: ({ row }) => <UserActions user={row.original} />,
-  },
-];
+function buildColumns(t: Dict): ColumnDef<AdminUser>[] {
+  return [
+    {
+      id: 'rowId',
+      header: t.lists.id,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.index + 1}</span>
+      ),
+    },
+    {
+      accessorKey: 'name',
+      header: t.common.name,
+      cell: ({ row }) => row.original.name ?? '—',
+    },
+    { accessorKey: 'email', header: t.common.email },
+    {
+      accessorKey: 'phone',
+      header: t.common.phone,
+      cell: ({ row }) => row.original.phone ?? '—',
+    },
+    {
+      accessorKey: 'city',
+      header: t.common.city,
+      cell: ({ row }) => row.original.city ?? '—',
+    },
+    {
+      id: 'actions',
+      header: t.common.actions,
+      cell: ({ row }) => <UserActions user={row.original} />,
+    },
+  ];
+}
 
 export function UsersTable() {
+  const { t } = useAdminI18n();
   const { data, isLoading, isError, error } = useUsers();
   if (isLoading)
-    return <p className="text-muted-foreground p-4 text-sm">Loading users…</p>;
+    return <p className="text-muted-foreground p-4 text-sm">{t.lists.loadingUsers}</p>;
   if (isError)
     return <p className="text-destructive p-4 text-sm">{(error as Error).message}</p>;
   return (
     <DataTable
-      columns={columns}
+      columns={buildColumns(t)}
       data={data?.items ?? []}
-      emptyMessage="No users yet."
+      emptyMessage={t.lists.emptyUsers}
     />
   );
 }
