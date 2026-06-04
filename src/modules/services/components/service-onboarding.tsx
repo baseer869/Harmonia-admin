@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Languages, Plus, Trash2 } from 'lucide-react';
+import { Languages, Plus, Trash2 } from 'lucide-react';
 
 import { Button, Input, Switch } from '@/components/ui';
 import {
@@ -173,8 +173,8 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const categories = useCategories();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [translating, setTranslating] = useState(false);
-  // Which language the admin is currently typing in (UI state, not submitted).
+  // The single language the admin writes in. The other language is generated
+  // automatically on save — the admin never manages translations by hand.
   const initialLang: Locale = service
     ? service.translations?.fr?.title
       ? 'fr'
@@ -218,9 +218,6 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
   const otherLang: Locale = lang === 'fr' ? 'en' : 'fr';
   const langLabel = (l: Locale) => (l === 'fr' ? t.svcForm.langFr : t.svcForm.langEn);
-  const frDone = blockComplete({ ...emptyBlock(), title: watch('fr.title') || '', description: watch('fr.description') || '' });
-  const enDone = blockComplete({ ...emptyBlock(), title: watch('en.title') || '', description: watch('en.description') || '' });
-  const coverage = (frDone ? 1 : 0) + (enDone ? 1 : 0);
 
   // Keep the en/fr arrays index-aligned when adding/removing structural rows.
   const spliceLocale = (key: 'options' | 'extras' | 'included' | 'info', i: number) => {
@@ -255,43 +252,57 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
     setStep((s) => Math.min(s + 1, wizardSteps.length - 1));
   };
 
-  // Free machine-translation of the current language into the other (editable).
-  const translateToOther = async () => {
-    const v = getValues();
-    const src = v[lang];
-    const jobs: { path: string; text: string }[] = [];
-    const push = (path: string, text?: string) => {
-      if (text && text.trim()) jobs.push({ path, text });
+  // Silently generate the OTHER language from the one the admin wrote in. Runs
+  // on save — the admin never sees or manages this. On failure we copy the
+  // source text across so both locales still exist (admin can fix later).
+  const translateBlock = async (src: Block, to: Locale): Promise<Block> => {
+    const out: Block = {
+      title: '',
+      subtitle: '',
+      description: '',
+      priceUnit: '',
+      tagsText: '',
+      options: src.options.map(() => ({ name: '' })),
+      extras: src.extras.map(() => ({ name: '' })),
+      included: src.included.map(() => ({ title: '', description: '' })),
+      info: src.info.map(() => ({ label: '', value: '' })),
     };
-    push(`${otherLang}.title`, src.title);
-    push(`${otherLang}.subtitle`, src.subtitle);
-    push(`${otherLang}.description`, src.description);
-    push(`${otherLang}.priceUnit`, src.priceUnit);
-    push(`${otherLang}.tagsText`, src.tagsText);
-    v.optionPrices.forEach((_, i) => push(`${otherLang}.options.${i}.name`, src.options?.[i]?.name));
-    v.extraPrices.forEach((_, i) => push(`${otherLang}.extras.${i}.name`, src.extras?.[i]?.name));
-    (src.included ?? []).forEach((it, i) => {
-      push(`${otherLang}.included.${i}.title`, it.title);
-      push(`${otherLang}.included.${i}.description`, it.description);
+    const texts: string[] = [];
+    const apply: ((s: string) => void)[] = [];
+    const q = (text: string | undefined, set: (s: string) => void) => {
+      if (text && text.trim()) {
+        texts.push(text);
+        apply.push(set);
+      }
+    };
+    q(src.title, (s) => { out.title = s; });
+    q(src.subtitle, (s) => { out.subtitle = s; });
+    q(src.description, (s) => { out.description = s; });
+    q(src.priceUnit, (s) => { out.priceUnit = s; });
+    q(src.tagsText, (s) => { out.tagsText = s; });
+    src.options.forEach((o, i) => { const r = out.options[i]!; q(o.name, (s) => { r.name = s; }); });
+    src.extras.forEach((e, i) => { const r = out.extras[i]!; q(e.name, (s) => { r.name = s; }); });
+    src.included.forEach((it, i) => {
+      const r = out.included[i]!;
+      q(it.title, (s) => { r.title = s; });
+      q(it.description, (s) => { r.description = s; });
     });
-    (src.info ?? []).forEach((it, i) => {
-      push(`${otherLang}.info.${i}.label`, it.label);
-      push(`${otherLang}.info.${i}.value`, it.value);
+    src.info.forEach((it, i) => {
+      const r = out.info[i]!;
+      q(it.label, (s) => { r.label = s; });
+      q(it.value, (s) => { r.value = s; });
     });
-    if (!jobs.length) return;
-    setTranslating(true);
+    if (!texts.length) return out;
     try {
       const { translations } = await http.post<{ translations: string[] }>(
         '/api/admin/translate',
-        { texts: jobs.map((j) => j.text), to: otherLang },
+        { texts, to },
       );
-      jobs.forEach((j, i) => setValue(j.path as never, (translations[i] ?? '') as never));
-      setLang(otherLang); // switch view so the admin can review the result
+      apply.forEach((set, i) => set(translations[i] ?? texts[i]!));
     } catch {
-      /* best-effort; admin can type manually */
-    } finally {
-      setTranslating(false);
+      apply.forEach((set, i) => set(texts[i]!)); // fall back to the source text
     }
+    return out;
   };
 
   const buildBlock = (b: Block, optIdx: number[], extIdx: number[]): ServiceLocaleFields => ({
@@ -312,25 +323,31 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
   const submit = async () => {
     if (!(await trigger())) {
-      // Surface the cross-language requirement on the General step.
-      if (errors.fr || errors.en) setStep(1);
+      if (errors[lang]) setStep(1);
       return;
     }
     setSubmitting(true);
     const v = getValues();
-    const primary: Block = blockComplete(v.fr) ? v.fr : v.en;
+    // Source = the language the admin actually wrote in (prefer the selected one,
+    // but fall back to the other if the selection was left empty).
+    const source: Locale = blockComplete(v[lang]) ? lang : blockComplete(v[otherLang]) ? otherLang : lang;
+    const target: Locale = source === 'fr' ? 'en' : 'fr';
+    const src = v[source];
+    // Generate the other language silently from the source.
+    const generated = await translateBlock(src, target);
 
-    // Option/extra rows are kept only when the primary language names them.
+    // Option/extra rows are kept only when the written language names them.
     const optIdx = v.optionPrices
       .map((_, i) => i)
-      .filter((i) => (primary.options?.[i]?.name ?? '').trim());
+      .filter((i) => (src.options?.[i]?.name ?? '').trim());
     const extIdx = v.extraPrices
       .map((_, i) => i)
-      .filter((i) => (primary.extras?.[i]?.name ?? '').trim());
+      .filter((i) => (src.extras?.[i]?.name ?? '').trim());
 
-    const translations: Record<string, ServiceLocaleFields> = {};
-    if (blockComplete(v.fr)) translations.fr = buildBlock(v.fr, optIdx, extIdx);
-    if (blockComplete(v.en)) translations.en = buildBlock(v.en, optIdx, extIdx);
+    const translations: Record<string, ServiceLocaleFields> = {
+      [source]: buildBlock(src, optIdx, extIdx),
+      [target]: buildBlock(generated, optIdx, extIdx),
+    };
 
     const payload = {
       categoryId: v.categoryId || undefined,
@@ -348,11 +365,11 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       active: v.active,
       featured: v.featured,
       options: optIdx.map((i) => ({
-        name: (primary.options?.[i]?.name ?? '').trim(),
+        name: (src.options?.[i]?.name ?? '').trim(),
         priceDeltaCents: toMinorUnits(Number(v.optionPrices[i]?.priceDelta) || 0, v.currency),
       })),
       extras: extIdx.map((i) => ({
-        name: (primary.extras?.[i]?.name ?? '').trim(),
+        name: (src.extras?.[i]?.name ?? '').trim(),
         priceCents: toMinorUnits(Number(v.extraPrices[i]?.price) || 0, v.currency),
       })),
       translations,
@@ -376,40 +393,22 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const cover = watch('coverUrl');
   const thumb = watch('thumbUrl');
 
-  // Shared language bar shown on every text-bearing step.
+  // Shown on every text-bearing step: pick the language you write in. The other
+  // language is generated automatically on save — no tabs, no second form.
   const langBar = (
-    <div className="bg-muted/30 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-          <Languages className="size-4" /> {t.svcForm.contentLanguage}
-        </span>
-        <div className="bg-background inline-flex rounded-md border p-0.5">
-          {LOCALES.map((l) => {
-            const done = l === 'fr' ? frDone : enDone;
-            return (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLang(l)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded px-3 py-1 text-sm transition-colors',
-                  lang === l ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
-                )}
-              >
-                {langLabel(l)}
-                {done && <Check className="size-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-        <span className="text-muted-foreground text-xs">
-          {t.svcForm.coverageLabel} {coverage * 50}%
-        </span>
-      </div>
-      <Button type="button" variant="outline" size="sm" onClick={translateToOther} disabled={translating}>
-        <Languages className="size-4" />
-        {translating ? t.svcForm.translating : `${t.svcForm.translateTo} ${langLabel(otherLang)}`}
-      </Button>
+    <div className="mb-6 flex flex-wrap items-center gap-3">
+      <span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
+        <Languages className="size-4" /> {t.svcForm.contentLanguage}
+      </span>
+      <select
+        value={lang}
+        onChange={(e) => setLang(e.target.value as Locale)}
+        className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+      >
+        <option value="fr">{t.svcForm.langFr}</option>
+        <option value="en">{t.svcForm.langEn}</option>
+      </select>
+      <span className="text-muted-foreground text-xs">{t.svcForm.autoTranslateHint}</span>
     </div>
   );
 
@@ -704,7 +703,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
         </div>
       )}
 
-      {step === 6 && <ReviewStep v={getValues()} lang={lang} coverage={coverage} rootError={errors.root?.message} />}
+      {step === 6 && <ReviewStep v={getValues()} lang={lang} rootError={errors.root?.message} />}
     </Wizard>
   );
 }
@@ -760,21 +759,20 @@ function Repeater({
 function ReviewStep({
   v,
   lang,
-  coverage,
   rootError,
 }: {
   v: Form;
   lang: Locale;
-  coverage: number;
   rootError?: string;
 }) {
   const { t } = useAdminI18n();
   const block = blockComplete(v[lang]) ? v[lang] : blockComplete(v.fr) ? v.fr : v.en;
+  const langName = lang === 'fr' ? t.svcForm.langFr : t.svcForm.langEn;
   const rows: [string, string][] = [
     [t.svcForm.rType, v.type],
     [t.svcForm.rTitle, block.title],
     [t.svcForm.rPrice, v.type === 'QUOTE' ? t.svcForm.onQuote : `${v.price} ${v.currency} ${block.priceUnit ?? ''}`],
-    [t.svcForm.coverageLabel, `${coverage * 50}%  (${[v.fr, v.en].filter(blockComplete).length}/2)`],
+    [t.svcForm.contentLanguage, langName],
     [t.svcForm.rOptions, String(v.optionPrices.length)],
     [t.svcForm.rExtras, String(v.extraPrices.length)],
   ];

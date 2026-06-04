@@ -69,7 +69,7 @@ interface Dict {
     accepted: string; acceptedHint: string;
     stFrench: string; translateBtn: string; translating: string; frHint: string;
     contentLanguage: string; coverageLabel: string; translateTo: string;
-    langFr: string; langEn: string; reqOneLang: string;
+    langFr: string; langEn: string; reqOneLang: string; autoTranslateHint: string;
   };
   /** Inline Add-user / Add-category forms. */
   forms: {
@@ -174,6 +174,7 @@ const DICT: Record<Locale, Dict> = {
       contentLanguage: 'Content language', coverageLabel: 'Coverage', translateTo: 'Translate to',
       langFr: 'Français', langEn: 'English',
       reqOneLang: 'Enter a title and description for this language.',
+      autoTranslateHint: 'The other language is generated automatically when you save.',
     },
     forms: {
       password: 'Password', add: 'Add', adding: 'Adding…',
@@ -276,6 +277,7 @@ const DICT: Record<Locale, Dict> = {
       contentLanguage: 'Langue du contenu', coverageLabel: 'Couverture', translateTo: 'Traduire vers',
       langFr: 'Français', langEn: 'English',
       reqOneLang: 'Saisissez un titre et une description pour cette langue.',
+      autoTranslateHint: "L'autre langue est générée automatiquement à l'enregistrement.",
     },
     forms: {
       password: 'Mot de passe', add: 'Ajouter', adding: 'Ajout…',
