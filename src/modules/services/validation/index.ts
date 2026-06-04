@@ -54,6 +54,7 @@ export const createServiceSchema = z.object({
   priceMode: priceModeSchema.default('PER_PERSON'),
   priceCents: z.coerce.number().int().min(0).default(0),
   currency: z.string().length(3).default('MAD'),
+  acceptedCurrencies: z.array(z.string().length(3)).default([]),
   priceUnit: z.string().max(40).optional(),
   requiresDate: z.boolean().default(true),
   minPeople: z.coerce.number().int().min(1).optional(),

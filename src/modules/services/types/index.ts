@@ -41,6 +41,7 @@ export interface Service {
   priceMode: PriceMode;
   priceCents: number;
   currency: string;
+  acceptedCurrencies: string[];
   priceUnit: string | null;
   requiresDate: boolean;
   minPeople: number | null;

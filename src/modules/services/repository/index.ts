@@ -33,6 +33,7 @@ export interface CreateServiceData {
   priceMode: PriceMode;
   priceCents: number;
   currency: string;
+  acceptedCurrencies: string[];
   priceUnit?: string | null;
   requiresDate: boolean;
   minPeople?: number | null;
@@ -75,6 +76,7 @@ function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>): Service {
     priceMode: r.priceMode,
     priceCents: r.priceCents,
     currency: r.currency,
+    acceptedCurrencies: r.acceptedCurrencies,
     priceUnit: r.priceUnit,
     requiresDate: r.requiresDate,
     minPeople: r.minPeople,

@@ -293,7 +293,8 @@ model Service {
 
   // Pricing & booking parameters (drive the customer booking form)
   priceCents      Int       @default(0)
-  currency        String    @default("MAD")
+  currency        String    @default("MAD") // base/price currency
+  acceptedCurrencies String[] @default([]) // currencies accepted for payment
   priceMode       PriceMode @default(PER_PERSON)
   priceUnit       String? // e.g. "per person", "per trip"
   requiresDate    Boolean   @default(true)

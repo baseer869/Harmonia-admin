@@ -21,6 +21,7 @@ import {
   fromMinorUnits,
   toMinorUnits,
 } from '@/constants';
+import { cn } from '@/lib/utils';
 import { useTenants } from '@/modules/tenants';
 import { useCategories } from '@/modules/categories';
 import { useAdminI18n } from '@/lib/i18n/provider';
@@ -40,6 +41,7 @@ const schema = z.object({
   priceMode: z.enum(['PER_PERSON', 'PER_TRIP', 'FIXED', 'ON_QUOTE']),
   price: z.coerce.number().min(0),
   currency: z.string().length(3),
+  acceptedCurrencies: z.array(z.string()).default([]),
   priceUnit: z.string().optional(),
   requiresDate: z.boolean(),
   maxPeople: z.coerce.number().int().min(1).optional().or(z.literal('')),
@@ -90,6 +92,7 @@ function toFormValues(s: Service): Form {
     priceMode: s.priceMode,
     price: minor(s.priceCents),
     currency: s.currency,
+    acceptedCurrencies: s.acceptedCurrencies ?? [],
     priceUnit: s.priceUnit ?? '',
     requiresDate: s.requiresDate,
     maxPeople: s.maxPeople ?? '',
@@ -134,6 +137,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
           priceMode: 'PER_PERSON',
           price: 0,
           currency: DEFAULT_CURRENCY,
+          acceptedCurrencies: [DEFAULT_CURRENCY],
           requiresDate: true,
           active: true,
           featured: false,
@@ -185,6 +189,8 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       priceMode: v.priceMode,
       priceCents: isQuote ? 0 : toMinorUnits(Number(v.price), v.currency),
       currency: v.currency,
+      // Always include the base price currency among the accepted ones.
+      acceptedCurrencies: Array.from(new Set([v.currency, ...v.acceptedCurrencies])),
       priceUnit: v.priceUnit || undefined,
       requiresDate: isProduct ? false : v.requiresDate,
       maxPeople: v.maxPeople ? Number(v.maxPeople) : undefined,
@@ -258,15 +264,49 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
               <option value="QUOTE">{t.svcForm.tQuote}</option>
             </FieldSelect>
           </Field>
-          <Field label={t.svcForm.category} hint={t.svcForm.optional}>
-            <FieldSelect {...register('categoryId')}>
-              <option value="">{t.svcForm.none}</option>
-              {categories.data?.items.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.parentName ? `${c.parentName} › ${c.name}` : c.name}
-                </option>
-              ))}
-            </FieldSelect>
+          <Field label={t.svcForm.category} hint={t.svcForm.optional} className="md:col-span-3">
+            {(() => {
+              const cats = categories.data?.items ?? [];
+              const parents = cats.filter((c) => !c.parentId);
+              const selected = watch('categoryId');
+              const row = (id: string, label: string, indent: boolean) => (
+                <button
+                  key={id || 'none'}
+                  type="button"
+                  onClick={() => setValue('categoryId', id)}
+                  className={cn(
+                    'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] transition-colors',
+                    indent && 'pl-8',
+                    selected === id
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'hover:bg-accent',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'grid size-4 shrink-0 place-items-center rounded-full border',
+                      selected === id ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+                    )}
+                  >
+                    {selected === id && <span className="size-1.5 rounded-full bg-white" />}
+                  </span>
+                  {label}
+                </button>
+              );
+              return (
+                <div className="max-h-60 space-y-0.5 overflow-y-auto rounded-lg border p-2">
+                  {row('', t.svcForm.none, false)}
+                  {parents.map((p) => (
+                    <div key={p.id}>
+                      {row(p.id, p.name, false)}
+                      {cats
+                        .filter((c) => c.parentId === p.id)
+                        .map((c) => row(c.id, c.name, true))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </Field>
         </div>
       )}
@@ -327,6 +367,43 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
               ))}
             </FieldSelect>
           </Field>
+          {!isQuote && (
+            <Field label={t.svcForm.accepted} hint={t.svcForm.acceptedHint} className="md:col-span-3">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {CURRENCIES.map((c) => {
+                  const base = watch('currency') === c.code;
+                  const checked = base || (watch('acceptedCurrencies') ?? []).includes(c.code);
+                  return (
+                    <label
+                      key={c.code}
+                      className={cn(
+                        'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-[15px] transition-colors',
+                        checked ? 'border-primary bg-primary/5' : 'hover:bg-accent',
+                        base && 'opacity-70',
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={base}
+                        className="accent-primary"
+                        onChange={(e) => {
+                          const cur = watch('acceptedCurrencies') ?? [];
+                          setValue(
+                            'acceptedCurrencies',
+                            e.target.checked
+                              ? Array.from(new Set([...cur, c.code]))
+                              : cur.filter((x) => x !== c.code),
+                          );
+                        }}
+                      />
+                      {c.code}
+                    </label>
+                  );
+                })}
+              </div>
+            </Field>
+          )}
           <Field label={t.svcForm.priceUnit} hint={t.svcForm.hintUnit}>
             <Input {...register('priceUnit')} />
           </Field>
