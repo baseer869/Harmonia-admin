@@ -7,6 +7,7 @@ import { Bell, ChevronDown, LogOut, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/types';
 import { useLogout } from '@/modules/auth';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: 'Super Admin',
@@ -18,6 +19,7 @@ const ROLE_LABEL: Record<Role, string> = {
 export function Topbar({ role, email }: { role: Role; email: string }) {
   const router = useRouter();
   const logout = useLogout();
+  const { locale, setLocale, t } = useAdminI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initials = email.slice(0, 2).toUpperCase();
@@ -42,12 +44,31 @@ export function Topbar({ role, email }: { role: Role; email: string }) {
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" />
         <input
           type="search"
-          placeholder="Search…"
+          placeholder={t.topbar.search}
           className="focus:border-primary h-10 w-full rounded-lg border-2 border-[#C2C2C2] bg-transparent pr-3 pl-10 text-[14px] outline-none"
         />
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Language toggle */}
+        <div className="flex items-center rounded-full border p-0.5" role="group" aria-label={t.topbar.language}>
+          {(['en', 'fr'] as const).map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLocale(l)}
+              className={cn(
+                'rounded-full px-2.5 py-1 text-xs font-semibold uppercase transition-colors',
+                locale === l
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
         <button
           type="button"
           className="text-muted-foreground hover:bg-accent hover:text-foreground relative grid size-9 place-items-center rounded-full transition-colors"
@@ -97,7 +118,7 @@ export function Topbar({ role, email }: { role: Role; email: string }) {
                 className="hover:bg-accent text-destructive flex w-full items-center gap-2 px-4 py-2.5 text-sm transition-colors"
               >
                 <LogOut className="size-4" />
-                {logout.isPending ? 'Signing out…' : 'Sign out'}
+                {logout.isPending ? '…' : t.topbar.signOut}
               </button>
             </div>
           )}

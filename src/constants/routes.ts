@@ -49,6 +49,8 @@ export interface NavItem {
   children?: NavChild[];
   /** Expand the submenu by default. */
   defaultOpen?: boolean;
+  /** Hide from the sidebar without removing the route/page (unused for now). */
+  hidden?: boolean;
 }
 
 const ALL: ReadonlyArray<Role> = ['SUPER_ADMIN', 'TENANT_ADMIN', 'TENANT_STAFF'];
@@ -84,9 +86,10 @@ export const NAV_ITEMS: ReadonlyArray<NavItem> = [
     ],
   },
   { id: 'reservations', label: 'Bookings', icon: CalendarCheck2, roles: ALL, href: 'reservations' },
-  { id: 'vendors', label: 'Vendors', icon: Handshake, roles: SUPER, href: 'vendors' },
-  { id: 'properties', label: 'Properties', icon: Home, roles: SUPER, href: 'properties' },
-  { id: 'payments', label: 'Payments', icon: Wallet, roles: SUPER, href: 'payments' },
-  { id: 'reports', label: 'Reports', icon: BarChart3, roles: SUPER, href: 'reports' },
+  // Hidden for now (pages kept, just not shown in the sidebar).
+  { id: 'vendors', label: 'Vendors', icon: Handshake, roles: SUPER, href: 'vendors', hidden: true },
+  { id: 'properties', label: 'Properties', icon: Home, roles: SUPER, href: 'properties', hidden: true },
+  { id: 'payments', label: 'Payments', icon: Wallet, roles: SUPER, href: 'payments', hidden: true },
+  { id: 'reports', label: 'Reports', icon: BarChart3, roles: SUPER, href: 'reports', hidden: true },
   { id: 'settings', label: 'Settings', icon: Settings, roles: ADMINS, href: 'settings' },
 ];

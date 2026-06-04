@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { Role } from '@/types';
+import { AdminI18nProvider } from '@/lib/i18n/provider';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
@@ -15,14 +16,16 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-background min-h-screen">
-      <Sidebar role={role} />
-      <div className="flex min-h-screen flex-col md:pl-64">
-        <Topbar role={role} email={email} />
-        <main className="w-full flex-1 p-6 lg:px-10 lg:py-8 2xl:max-w-450">
-          {children}
-        </main>
+    <AdminI18nProvider>
+      <div className="bg-background min-h-screen">
+        <Sidebar role={role} />
+        <div className="flex min-h-screen flex-col md:pl-64">
+          <Topbar role={role} email={email} />
+          <main className="w-full flex-1 p-6 lg:px-10 lg:py-8 2xl:max-w-450">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminI18nProvider>
   );
 }

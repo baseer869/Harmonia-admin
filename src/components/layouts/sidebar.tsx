@@ -8,11 +8,13 @@ import { Building2, ChevronDown, ChevronsUpDown } from 'lucide-react';
 
 import { NAV_ITEMS, ROUTES, type NavItem } from '@/constants';
 import { cn } from '@/lib/utils';
+import { useAdminI18n } from '@/lib/i18n/provider';
 import type { Role } from '@/types';
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const { t } = useAdminI18n();
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(role) && !item.hidden);
 
   const isActive = (key: keyof typeof ROUTES) => {
     const href = ROUTES[key];
@@ -41,7 +43,7 @@ export function Sidebar({ role }: { role: Role }) {
             HARMONIA
           </div>
           <div className="text-[10px] tracking-[0.14em] text-white/55 uppercase">
-            Admin
+            {t.sidebar.admin}
           </div>
         </div>
       </div>
@@ -57,9 +59,9 @@ export function Sidebar({ role }: { role: Role }) {
           </span>
           <span className="min-w-0 flex-1 text-white">
             <span className="block truncate text-[13px] font-medium">
-              {role === 'SUPER_ADMIN' ? 'All Tenants' : 'My Workspace'}
+              {role === 'SUPER_ADMIN' ? t.sidebar.allTenants : t.sidebar.myWorkspace}
             </span>
-            <span className="block text-[11px] text-white/55">Harmonia SaaS</span>
+            <span className="block text-[11px] text-white/55">{t.sidebar.saas}</span>
           </span>
           <ChevronsUpDown className="size-3.5 shrink-0 text-white/60" />
         </button>
@@ -74,6 +76,8 @@ export function Sidebar({ role }: { role: Role }) {
               item={item}
               role={role}
               isActive={isActive}
+              label={t.nav[item.id] ?? item.label}
+              subnav={t.subnav}
               open={openId === item.id}
               onToggle={() =>
                 setOpenId((cur) => (cur === item.id ? undefined : item.id))
@@ -83,7 +87,7 @@ export function Sidebar({ role }: { role: Role }) {
             <NavLeaf
               key={item.id}
               href={ROUTES[item.href!]}
-              label={item.label}
+              label={t.nav[item.id] ?? item.label}
               icon={item.icon}
               active={isActive(item.href!)}
             />
@@ -130,12 +134,16 @@ function NavGroup({
   item,
   role,
   isActive,
+  label,
+  subnav,
   open,
   onToggle,
 }: {
   item: NavItem;
   role: Role;
   isActive: (key: keyof typeof ROUTES) => boolean;
+  label: string;
+  subnav: Record<string, string>;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -169,7 +177,7 @@ function NavGroup({
               anyActive ? 'text-sidebar-accent-foreground' : 'text-white/70 group-hover:text-white',
             )}
           />
-          <span className="text-left">{item.label}</span>
+          <span className="text-left">{label}</span>
         </Link>
         <button
           type="button"
@@ -200,7 +208,7 @@ function NavGroup({
                     : 'text-sidebar-foreground hover:bg-white/10 hover:text-white',
                 )}
               >
-                {c.label}
+                {subnav[c.key] ?? c.label}
               </Link>
             );
           })}
