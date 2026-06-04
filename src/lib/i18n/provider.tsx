@@ -67,6 +67,21 @@ interface Dict {
     rType: string; rTitle: string; rPrice: string; rOptions: string; rExtras: string;
     rIncluded: string; onQuote: string; noCover: string; untitled: string;
   };
+  /** Inline Add-user / Add-category forms. */
+  forms: {
+    password: string; add: string; adding: string;
+    roleStaff: string; roleTenantAdmin: string; roleSuperAdmin: string;
+    categoryName: string; parentCategory: string; parentHint: string; topLevel: string;
+    optional: string; description: string; addCategory: string;
+  };
+  /** Tenant onboarding wizard. */
+  tntForm: {
+    stDetails: string; stProfile: string; stReview: string;
+    onboardTitle: string; createTenant: string; name: string; status: string;
+    currency: string; currencyHint: string; description: string; contactEmail: string;
+    contactPhone: string; logo: string; cover: string;
+    noCover: string; untitled: string; noDescription: string;
+  };
 }
 
 const DICT: Record<Locale, Dict> = {
@@ -150,6 +165,21 @@ const DICT: Record<Locale, Dict> = {
       rType: 'Type', rTitle: 'Title', rPrice: 'Price', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Included', onQuote: 'On quote', noCover: 'No cover image', untitled: 'Untitled service',
     },
+    forms: {
+      password: 'Password', add: 'Add', adding: 'Adding…',
+      roleStaff: 'Staff', roleTenantAdmin: 'Tenant Admin', roleSuperAdmin: 'Super Admin',
+      categoryName: 'Category name', parentCategory: 'Parent category',
+      parentHint: 'Leave empty for a top-level category', topLevel: '— Top level —',
+      optional: 'Optional', description: 'Description', addCategory: 'Add category',
+    },
+    tntForm: {
+      stDetails: 'Tenant Details', stProfile: 'Profile & Branding', stReview: 'Review',
+      onboardTitle: 'Onboard Tenant', createTenant: 'Create tenant', name: 'Tenant name', status: 'Status',
+      currency: 'Default currency', currencyHint: "Used for this tenant's pricing & payments",
+      description: 'Description', contactEmail: 'Contact email', contactPhone: 'Contact phone',
+      logo: 'Logo', cover: 'Cover / banner',
+      noCover: 'No cover image', untitled: 'Untitled tenant', noDescription: 'No description',
+    },
   },
   fr: {
     nav: {
@@ -230,6 +260,21 @@ const DICT: Record<Locale, Dict> = {
       noneAdded: 'Aucun ajouté.', remove: 'Supprimer',
       rType: 'Type', rTitle: 'Titre', rPrice: 'Prix', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Inclus', onQuote: 'Sur devis', noCover: 'Pas de couverture', untitled: 'Service sans titre',
+    },
+    forms: {
+      password: 'Mot de passe', add: 'Ajouter', adding: 'Ajout…',
+      roleStaff: 'Personnel', roleTenantAdmin: 'Admin locataire', roleSuperAdmin: 'Super Admin',
+      categoryName: 'Nom de la catégorie', parentCategory: 'Catégorie parente',
+      parentHint: 'Laisser vide pour une catégorie de premier niveau', topLevel: '— Premier niveau —',
+      optional: 'Facultatif', description: 'Description', addCategory: 'Ajouter une catégorie',
+    },
+    tntForm: {
+      stDetails: 'Détails du locataire', stProfile: 'Profil & image de marque', stReview: 'Récapitulatif',
+      onboardTitle: 'Ajouter un locataire', createTenant: 'Créer le locataire', name: 'Nom du locataire', status: 'Statut',
+      currency: 'Devise par défaut', currencyHint: 'Utilisée pour les prix & paiements de ce locataire',
+      description: 'Description', contactEmail: 'E-mail de contact', contactPhone: 'Téléphone de contact',
+      logo: 'Logo', cover: 'Couverture / bannière',
+      noCover: 'Pas de couverture', untitled: 'Locataire sans nom', noDescription: 'Pas de description',
     },
   },
 };
