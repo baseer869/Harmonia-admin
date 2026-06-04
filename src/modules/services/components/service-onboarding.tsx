@@ -23,6 +23,7 @@ import {
 } from '@/constants';
 import { useTenants } from '@/modules/tenants';
 import { useCategories } from '@/modules/categories';
+import { useAdminI18n } from '@/lib/i18n/provider';
 import { useCreateService, useUpdateService } from '../hooks';
 import type { Service } from '../types';
 
@@ -105,7 +106,17 @@ function toFormValues(s: Service): Form {
 
 export function ServiceOnboarding({ service }: { service?: Service }) {
   const router = useRouter();
+  const { t } = useAdminI18n();
   const isEdit = Boolean(service);
+  const wizardSteps: WizardStep[] = [
+    { id: 'type', label: t.svcForm.stType },
+    { id: 'general', label: t.svcForm.stGeneral },
+    { id: 'media', label: t.svcForm.stMedia },
+    { id: 'pricing', label: t.svcForm.stPricing },
+    { id: 'options', label: t.svcForm.stOptions },
+    { id: 'details', label: t.svcForm.stDetails },
+    { id: 'review', label: t.svcForm.stReview },
+  ];
   const createService = useCreateService();
   const updateService = useUpdateService(service?.id ?? '');
   const tenants = useTenants({ pageSize: 100 });
@@ -211,45 +222,45 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
   return (
     <Wizard
-      title={isEdit ? 'Edit Service' : 'Add Service'}
+      title={isEdit ? t.svcForm.editTitle : t.svcForm.addTitle}
       backHref="/services"
-      steps={STEPS}
+      steps={wizardSteps}
       current={step}
       onStepChange={setStep}
       onBack={() => setStep((s) => Math.max(0, s - 1))}
       onNext={next}
       onSubmit={submit}
       isSubmitting={submitting}
-      submitLabel={isEdit ? 'Save changes' : 'Create service'}
+      submitLabel={isEdit ? t.common.save : t.svcForm.create}
     >
       {step === 0 && (
         <div className="grid gap-x-8 gap-y-6 md:grid-cols-3">
-          <Field label="Tenant" required error={errors.tenantId?.message}>
+          <Field label={t.svcForm.tenant} required error={errors.tenantId?.message}>
             <FieldSelect {...register('tenantId')} disabled={isEdit}>
-              <option value="">Select a tenant…</option>
-              {tenants.data?.items.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+              <option value="">{t.svcForm.selectTenant}</option>
+              {tenants.data?.items.map((tn) => (
+                <option key={tn.id} value={tn.id}>{tn.name}</option>
               ))}
             </FieldSelect>
           </Field>
-          <Field label="Service type" hint="Drives the booking form">
+          <Field label={t.svcForm.svcType} hint={t.svcForm.hintType}>
             <FieldSelect
               {...register('type')}
               onChange={(e) => {
-                const t = e.target.value as Form['type'];
-                setValue('type', t);
-                setValue('priceMode', TYPE_DEFAULT_MODE[t]);
+                const ty = e.target.value as Form['type'];
+                setValue('type', ty);
+                setValue('priceMode', TYPE_DEFAULT_MODE[ty]);
               }}
             >
-              <option value="EXPERIENCE">Experience (date · people)</option>
-              <option value="TRANSFER">Transfer (per trip)</option>
-              <option value="PRODUCT">Product (quantity)</option>
-              <option value="QUOTE">On quote (enquiry)</option>
+              <option value="EXPERIENCE">{t.svcForm.tExperience}</option>
+              <option value="TRANSFER">{t.svcForm.tTransfer}</option>
+              <option value="PRODUCT">{t.svcForm.tProduct}</option>
+              <option value="QUOTE">{t.svcForm.tQuote}</option>
             </FieldSelect>
           </Field>
-          <Field label="Category" hint="Optional">
+          <Field label={t.svcForm.category} hint={t.svcForm.optional}>
             <FieldSelect {...register('categoryId')}>
-              <option value="">— None —</option>
+              <option value="">{t.svcForm.none}</option>
               {categories.data?.items.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.parentName ? `${c.parentName} › ${c.name}` : c.name}
@@ -262,16 +273,16 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
       {step === 1 && (
         <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
-          <Field label="Title" required error={errors.title?.message}>
+          <Field label={t.svcForm.title} required error={errors.title?.message}>
             <Input placeholder="Agafay Desert Excursion" {...register('title')} />
           </Field>
-          <Field label="Subtitle">
+          <Field label={t.svcForm.subtitle}>
             <Input placeholder="Sunset, dunes & a Berber dinner" {...register('subtitle')} />
           </Field>
-          <Field label="Description" className="md:col-span-2">
-            <Input placeholder="Full description" {...register('description')} />
+          <Field label={t.svcForm.description} className="md:col-span-2">
+            <Input {...register('description')} />
           </Field>
-          <Field label="Tags" className="md:col-span-2" hint="Comma-separated">
+          <Field label={t.svcForm.tags} className="md:col-span-2" hint={t.svcForm.commaSep}>
             <Input placeholder="Desert, Adventure, Marrakech" {...register('tagsText')} />
           </Field>
         </div>
@@ -280,7 +291,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       {step === 2 && (
         <div className="max-w-xl">
           <ImageUpload
-            label="Photo"
+            label={t.svcForm.photo}
             variant="cover"
             value={cover || thumb}
             onChange={(u) => {
@@ -289,60 +300,60 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
             }}
           />
           <p className="text-muted-foreground mt-2 text-sm">
-            One photo is enough — it’s used as both the cover and the thumbnail.
+            {t.svcForm.photoNote}
           </p>
         </div>
       )}
 
       {step === 3 && (
         <div className="grid gap-x-8 gap-y-6 md:grid-cols-3">
-          <Field label="Price mode">
+          <Field label={t.svcForm.priceMode}>
             <FieldSelect {...register('priceMode')}>
-              <option value="PER_PERSON">Per person</option>
-              <option value="PER_TRIP">Per trip</option>
-              <option value="FIXED">Fixed</option>
-              <option value="ON_QUOTE">On quote</option>
+              <option value="PER_PERSON">{t.svcForm.mPerPerson}</option>
+              <option value="PER_TRIP">{t.svcForm.mPerTrip}</option>
+              <option value="FIXED">{t.svcForm.mFixed}</option>
+              <option value="ON_QUOTE">{t.svcForm.mOnQuote}</option>
             </FieldSelect>
           </Field>
           {!isQuote && (
-            <Field label="Price" required error={errors.price?.message}>
+            <Field label={t.svcForm.price} required error={errors.price?.message}>
               <Input type="number" min={0} step="0.01" {...register('price')} />
             </Field>
           )}
-          <Field label="Currency" error={errors.currency?.message}>
+          <Field label={t.svcForm.currency} error={errors.currency?.message}>
             <FieldSelect {...register('currency')}>
               {CURRENCIES.map((c) => (
                 <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
               ))}
             </FieldSelect>
           </Field>
-          <Field label="Price unit" hint='e.g. "/ pers.", "/ trip"'>
-            <Input placeholder="per person" {...register('priceUnit')} />
+          <Field label={t.svcForm.priceUnit} hint={t.svcForm.hintUnit}>
+            <Input {...register('priceUnit')} />
           </Field>
           {!isProduct && (
-            <Field label="Max people">
+            <Field label={t.svcForm.maxPeople}>
               <Input type="number" min={1} {...register('maxPeople')} />
             </Field>
           )}
-          <Field label="Duration (minutes)">
+          <Field label={t.svcForm.duration}>
             <Input type="number" min={0} {...register('durationMinutes')} />
           </Field>
           {!isProduct && (
-            <Field label="Languages" hint="Comma-separated">
+            <Field label={t.svcForm.languages} hint={t.svcForm.commaSep}>
               <Input placeholder="Français, English, العربية" {...register('languagesText')} />
             </Field>
           )}
-          <Field label="Visible in catalog">
+          <Field label={t.svcForm.visible}>
             <div className="flex h-11 items-center gap-3">
               <Switch checked={watch('active')} onCheckedChange={(v) => setValue('active', v)} />
-              <span className="text-[15px]">{watch('active') ? 'Active' : 'Hidden'}</span>
+              <span className="text-[15px]">{watch('active') ? t.common.active : t.common.hidden}</span>
             </div>
           </Field>
           {!isProduct && (
-            <Field label="Requires a date">
+            <Field label={t.svcForm.requiresDate}>
               <div className="flex h-11 items-center gap-3">
                 <Switch checked={watch('requiresDate')} onCheckedChange={(v) => setValue('requiresDate', v)} />
-                <span className="text-[15px]">{watch('requiresDate') ? 'Yes' : 'No'}</span>
+                <span className="text-[15px]">{watch('requiresDate') ? t.svcForm.yes : t.svcForm.no}</span>
               </div>
             </Field>
           )}
@@ -352,28 +363,28 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       {step === 4 && (
         <div className="space-y-8">
           <Repeater
-            title="Options / formulas"
-            addLabel="Add option"
+            title={t.svcForm.optionsTitle}
+            addLabel={t.svcForm.addOption}
             onAdd={() => optionsFA.append({ name: '', priceDelta: 0 })}
             rows={optionsFA.fields}
             onRemove={optionsFA.remove}
             render={(i) => (
               <>
-                <Input placeholder="Option name" {...register(`options.${i}.name`)} />
-                <Input type="number" step="0.01" placeholder="Price delta" {...register(`options.${i}.priceDelta`)} />
+                <Input placeholder={t.svcForm.optionName} {...register(`options.${i}.name`)} />
+                <Input type="number" step="0.01" placeholder={t.svcForm.priceDelta} {...register(`options.${i}.priceDelta`)} />
               </>
             )}
           />
           <Repeater
-            title="Extras / add-ons"
-            addLabel="Add extra"
+            title={t.svcForm.extrasTitle}
+            addLabel={t.svcForm.addExtra}
             onAdd={() => extrasFA.append({ name: '', price: 0 })}
             rows={extrasFA.fields}
             onRemove={extrasFA.remove}
             render={(i) => (
               <>
-                <Input placeholder="Extra name" {...register(`extras.${i}.name`)} />
-                <Input type="number" step="0.01" placeholder="Price" {...register(`extras.${i}.price`)} />
+                <Input placeholder={t.svcForm.extraName} {...register(`extras.${i}.name`)} />
+                <Input type="number" step="0.01" placeholder={t.svcForm.priceCol} {...register(`extras.${i}.price`)} />
               </>
             )}
           />
@@ -383,28 +394,28 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       {step === 5 && (
         <div className="space-y-8">
           <Repeater
-            title="What's included"
-            addLabel="Add item"
+            title={t.svcForm.includedTitle}
+            addLabel={t.svcForm.addItem}
             onAdd={() => includedFA.append({ title: '', description: '' })}
             rows={includedFA.fields}
             onRemove={includedFA.remove}
             render={(i) => (
               <>
-                <Input placeholder="Title" {...register(`included.${i}.title`)} />
-                <Input placeholder="Description" {...register(`included.${i}.description`)} />
+                <Input placeholder={t.svcForm.itemTitle} {...register(`included.${i}.title`)} />
+                <Input placeholder={t.svcForm.itemDesc} {...register(`included.${i}.description`)} />
               </>
             )}
           />
           <Repeater
-            title="Practical info"
-            addLabel="Add info"
+            title={t.svcForm.practicalTitle}
+            addLabel={t.svcForm.addInfo}
             onAdd={() => infoFA.append({ label: '', value: '' })}
             rows={infoFA.fields}
             onRemove={infoFA.remove}
             render={(i) => (
               <>
-                <Input placeholder="Label (e.g. Duration)" {...register(`info.${i}.label`)} />
-                <Input placeholder="Value" {...register(`info.${i}.value`)} />
+                <Input placeholder={t.svcForm.infoLabel} {...register(`info.${i}.label`)} />
+                <Input placeholder={t.svcForm.infoValue} {...register(`info.${i}.value`)} />
               </>
             )}
           />
@@ -431,6 +442,7 @@ function Repeater({
   onRemove: (i: number) => void;
   render: (index: number) => React.ReactNode;
 }) {
+  const { t } = useAdminI18n();
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -441,7 +453,7 @@ function Repeater({
         </Button>
       </div>
       {rows.length === 0 ? (
-        <p className="text-muted-foreground text-sm">None added.</p>
+        <p className="text-muted-foreground text-sm">{t.svcForm.noneAdded}</p>
       ) : (
         <div className="space-y-3">
           {rows.map((row, i) => (
@@ -451,7 +463,7 @@ function Repeater({
                 type="button"
                 onClick={() => onRemove(i)}
                 className="text-muted-foreground hover:text-destructive mb-2 transition-colors"
-                aria-label="Remove"
+                aria-label={t.svcForm.remove}
               >
                 <Trash2 className="size-4" />
               </button>
@@ -464,13 +476,14 @@ function Repeater({
 }
 
 function ReviewStep({ v, rootError }: { v: Form; rootError?: string }) {
+  const { t } = useAdminI18n();
   const rows: [string, string][] = [
-    ['Type', v.type],
-    ['Title', v.title],
-    ['Price', v.type === 'QUOTE' ? 'On quote' : `${v.price} ${v.currency} ${v.priceUnit ?? ''}`],
-    ['Options', String(v.options.filter((o) => o.name).length)],
-    ['Extras', String(v.extras.filter((e) => e.name).length)],
-    ['Included', String(v.included.filter((i) => i.title).length)],
+    [t.svcForm.rType, v.type],
+    [t.svcForm.rTitle, v.title],
+    [t.svcForm.rPrice, v.type === 'QUOTE' ? t.svcForm.onQuote : `${v.price} ${v.currency} ${v.priceUnit ?? ''}`],
+    [t.svcForm.rOptions, String(v.options.filter((o) => o.name).length)],
+    [t.svcForm.rExtras, String(v.extras.filter((e) => e.name).length)],
+    [t.svcForm.rIncluded, String(v.included.filter((i) => i.title).length)],
   ];
   return (
     <div className="space-y-6">
@@ -481,12 +494,12 @@ function ReviewStep({ v, rootError }: { v: Form; rootError?: string }) {
             <img src={v.coverUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-              No cover image
+              {t.svcForm.noCover}
             </div>
           )}
         </div>
         <div className="px-6 py-5">
-          <h3 className="text-xl font-semibold">{v.title || 'Untitled service'}</h3>
+          <h3 className="text-xl font-semibold">{v.title || t.svcForm.untitled}</h3>
           <p className="text-muted-foreground text-sm">{v.subtitle || v.description || '—'}</p>
         </div>
       </div>

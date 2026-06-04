@@ -45,6 +45,28 @@ interface Dict {
     suspended: string; archived: string; blocked: string; inactive: string;
     id: string; slug: string; parent: string;
   };
+  /** Service onboarding/edit wizard. */
+  svcForm: {
+    addTitle: string; editTitle: string; create: string;
+    stType: string; stGeneral: string; stMedia: string; stPricing: string;
+    stOptions: string; stDetails: string; stReview: string;
+    tenant: string; svcType: string; category: string; title: string; subtitle: string;
+    description: string; tags: string; photo: string; priceMode: string; price: string;
+    currency: string; priceUnit: string; maxPeople: string; duration: string;
+    languages: string; visible: string; requiresDate: string;
+    hintType: string; optional: string; commaSep: string; hintUnit: string;
+    selectTenant: string; none: string;
+    tExperience: string; tTransfer: string; tProduct: string; tQuote: string;
+    mPerPerson: string; mPerTrip: string; mFixed: string; mOnQuote: string;
+    yes: string; no: string; photoNote: string;
+    optionsTitle: string; addOption: string; optionName: string; priceDelta: string;
+    extrasTitle: string; addExtra: string; extraName: string; priceCol: string;
+    includedTitle: string; addItem: string; itemTitle: string; itemDesc: string;
+    practicalTitle: string; addInfo: string; infoLabel: string; infoValue: string;
+    noneAdded: string; remove: string;
+    rType: string; rTitle: string; rPrice: string; rOptions: string; rExtras: string;
+    rIncluded: string; onQuote: string; noCover: string; untitled: string;
+  };
 }
 
 const DICT: Record<Locale, Dict> = {
@@ -107,6 +129,27 @@ const DICT: Record<Locale, Dict> = {
       suspended: 'Suspended', archived: 'Archived', blocked: 'Blocked', inactive: 'Inactive',
       id: 'ID', slug: 'Slug', parent: 'Parent',
     },
+    svcForm: {
+      addTitle: 'Add Service', editTitle: 'Edit Service', create: 'Create service',
+      stType: 'Type & Category', stGeneral: 'General', stMedia: 'Media', stPricing: 'Pricing & Booking',
+      stOptions: 'Options & Extras', stDetails: 'Details', stReview: 'Review',
+      tenant: 'Tenant', svcType: 'Service type', category: 'Category', title: 'Title', subtitle: 'Subtitle',
+      description: 'Description', tags: 'Tags', photo: 'Photo', priceMode: 'Price mode', price: 'Price',
+      currency: 'Currency', priceUnit: 'Price unit', maxPeople: 'Max people', duration: 'Duration (minutes)',
+      languages: 'Languages', visible: 'Visible in catalog', requiresDate: 'Requires a date',
+      hintType: 'Drives the booking form', optional: 'Optional', commaSep: 'Comma-separated', hintUnit: 'e.g. "/ pers.", "/ trip"',
+      selectTenant: 'Select a tenant…', none: '— None —',
+      tExperience: 'Experience (date · people)', tTransfer: 'Transfer (per trip)', tProduct: 'Product (quantity)', tQuote: 'On quote (enquiry)',
+      mPerPerson: 'Per person', mPerTrip: 'Per trip', mFixed: 'Fixed', mOnQuote: 'On quote',
+      yes: 'Yes', no: 'No', photoNote: 'One photo is enough — it’s used as both the cover and the thumbnail.',
+      optionsTitle: 'Options / formulas', addOption: 'Add option', optionName: 'Option name', priceDelta: 'Price delta',
+      extrasTitle: 'Extras / add-ons', addExtra: 'Add extra', extraName: 'Extra name', priceCol: 'Price',
+      includedTitle: "What's included", addItem: 'Add item', itemTitle: 'Title', itemDesc: 'Description',
+      practicalTitle: 'Practical info', addInfo: 'Add info', infoLabel: 'Label (e.g. Duration)', infoValue: 'Value',
+      noneAdded: 'None added.', remove: 'Remove',
+      rType: 'Type', rTitle: 'Title', rPrice: 'Price', rOptions: 'Options', rExtras: 'Extras',
+      rIncluded: 'Included', onQuote: 'On quote', noCover: 'No cover image', untitled: 'Untitled service',
+    },
   },
   fr: {
     nav: {
@@ -166,6 +209,27 @@ const DICT: Record<Locale, Dict> = {
       emptyCustomers: 'Aucun client.', emptyCategories: 'Aucune catégorie.',
       suspended: 'Suspendu', archived: 'Archivé', blocked: 'Bloqué', inactive: 'Inactif',
       id: 'ID', slug: 'Slug', parent: 'Parent',
+    },
+    svcForm: {
+      addTitle: 'Ajouter un service', editTitle: 'Modifier le service', create: 'Créer le service',
+      stType: 'Type & catégorie', stGeneral: 'Général', stMedia: 'Média', stPricing: 'Tarif & réservation',
+      stOptions: 'Options & extras', stDetails: 'Détails', stReview: 'Récapitulatif',
+      tenant: 'Locataire', svcType: 'Type de service', category: 'Catégorie', title: 'Titre', subtitle: 'Sous-titre',
+      description: 'Description', tags: 'Étiquettes', photo: 'Photo', priceMode: 'Mode de tarif', price: 'Prix',
+      currency: 'Devise', priceUnit: 'Unité de prix', maxPeople: 'Personnes max', duration: 'Durée (minutes)',
+      languages: 'Langues', visible: 'Visible au catalogue', requiresDate: 'Date requise',
+      hintType: 'Détermine le formulaire de réservation', optional: 'Facultatif', commaSep: 'Séparés par des virgules', hintUnit: 'ex. « / pers. », « / trajet »',
+      selectTenant: 'Choisir un locataire…', none: '— Aucune —',
+      tExperience: 'Expérience (date · personnes)', tTransfer: 'Transfert (par trajet)', tProduct: 'Produit (quantité)', tQuote: 'Sur devis (demande)',
+      mPerPerson: 'Par personne', mPerTrip: 'Par trajet', mFixed: 'Fixe', mOnQuote: 'Sur devis',
+      yes: 'Oui', no: 'Non', photoNote: 'Une seule photo suffit — utilisée comme couverture et miniature.',
+      optionsTitle: 'Options / formules', addOption: 'Ajouter une option', optionName: "Nom de l'option", priceDelta: 'Écart de prix',
+      extrasTitle: 'Extras / suppléments', addExtra: 'Ajouter un extra', extraName: "Nom de l'extra", priceCol: 'Prix',
+      includedTitle: 'Ce qui est inclus', addItem: 'Ajouter un élément', itemTitle: 'Titre', itemDesc: 'Description',
+      practicalTitle: 'Infos pratiques', addInfo: 'Ajouter une info', infoLabel: 'Libellé (ex. Durée)', infoValue: 'Valeur',
+      noneAdded: 'Aucun ajouté.', remove: 'Supprimer',
+      rType: 'Type', rTitle: 'Titre', rPrice: 'Prix', rOptions: 'Options', rExtras: 'Extras',
+      rIncluded: 'Inclus', onQuote: 'Sur devis', noCover: 'Pas de couverture', untitled: 'Service sans titre',
     },
   },
 };
