@@ -55,11 +55,7 @@ export const serviceLocaleFieldsSchema = z.object({
 export const createServiceSchema = z.object({
   categoryId: z.string().nullish(),
   type: serviceTypeSchema.default('EXPERIENCE'),
-  title: z.string().min(2).max(160),
-  subtitle: z.string().max(200).optional(),
   slug: slugSchema.optional(),
-  description: z.string().max(4000).nullish(),
-  tags: z.array(z.string()).default([]),
 
   coverUrl: z.string().optional().or(z.literal('')),
   thumbUrl: z.string().optional().or(z.literal('')),
@@ -68,7 +64,6 @@ export const createServiceSchema = z.object({
   priceCents: z.coerce.number().int().min(0).default(0),
   currency: z.string().length(3).default('MAD'),
   acceptedCurrencies: z.array(z.string().length(3)).default([]),
-  priceUnit: z.string().max(40).optional(),
   requiresDate: z.boolean().default(true),
   minPeople: z.coerce.number().int().min(1).optional(),
   maxPeople: z.coerce.number().int().min(1).optional(),
@@ -77,13 +72,19 @@ export const createServiceSchema = z.object({
   active: z.boolean().default(true),
   featured: z.boolean().default(false),
 
+  // Options/extras carry a base name (neutral key + fallback) and a price;
+  // their localized names live by index inside `translations`.
   options: z.array(serviceOptionSchema).default([]),
   extras: z.array(serviceExtraSchema).default([]),
-  included: z.array(serviceIncludedSchema).default([]),
-  info: z.array(serviceInfoSchema).default([]),
 
-  // Per-locale text overrides (e.g. { fr: { title, description, options[], … } }).
-  translations: z.record(z.string(), serviceLocaleFieldsSchema).optional(),
+  // Single source of truth for ALL localized text — peer locales, no canonical
+  // column. At least one locale must carry a title to publish the service.
+  translations: z
+    .record(z.string(), serviceLocaleFieldsSchema)
+    .refine(
+      (tr) => Object.values(tr).some((f) => Boolean(f.title && f.title.trim())),
+      'At least one language must have a title.',
+    ),
 });
 
 export const updateServiceSchema = createServiceSchema.partial();

@@ -74,6 +74,6 @@ export const publicBookingService = {
       throw ApiError.badRequest('Sign in or provide contact details to book.');
     }
 
-    return reservationRepository.createBooking(tenantId, customerId, data.items, data.notes);
+    return reservationRepository.createBooking(tenantId, customerId, data.items, data.notes, data.locale ?? 'fr');
   },
 };

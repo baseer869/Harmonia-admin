@@ -38,6 +38,8 @@ export const bookingItemSchema = z.object({
 export const createBookingSchema = z.object({
   items: z.array(bookingItemSchema).min(1, 'At least one item.'),
   notes: z.string().max(2000).optional(),
+  locale: z.string().max(5).optional(), // language the booking was made in
+
   customer: z
     .object({
       name: z.string().min(1).optional(),

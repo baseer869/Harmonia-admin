@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import type { Actor, Paginated } from '@/types';
 
 import { serviceRepository } from '../repository';
-import { resolveServiceLocale } from '../locale';
+import type { ServiceLocaleFields } from '../types';
 import {
   createServiceSchema,
   listServicesQuerySchema,
@@ -33,6 +33,50 @@ async function scopeTenant(actor: Actor, explicit?: string | null): Promise<stri
     return t.id;
   }
   return resolveTenantContext(actor, explicit ?? actor.tenantId).tenantId;
+}
+
+type Translations = Record<string, ServiceLocaleFields>;
+
+/** The locale to derive the slug + base option/extra names from (prefer en). */
+function primaryLocaleOf(tr: Translations): string {
+  const titled = (l: string) => Boolean(tr[l]?.title?.trim());
+  if (titled('en')) return 'en';
+  if (titled('fr')) return 'fr';
+  return Object.keys(tr).find(titled) ?? Object.keys(tr)[0] ?? 'en';
+}
+
+/** Map a validated input into the repository's create/update shape. */
+function toRepoData(d: CreateServiceInput, slug: string) {
+  const tr = d.translations as Translations;
+  const primary = primaryLocaleOf(tr);
+  return {
+    categoryId: d.categoryId ?? null,
+    type: d.type,
+    slug,
+    coverUrl: d.coverUrl || null,
+    thumbUrl: d.thumbUrl || null,
+    priceMode: d.priceMode,
+    priceCents: d.priceCents,
+    currency: d.currency,
+    acceptedCurrencies: d.acceptedCurrencies,
+    requiresDate: d.requiresDate,
+    minPeople: d.minPeople ?? null,
+    maxPeople: d.maxPeople ?? null,
+    durationMinutes: d.durationMinutes ?? null,
+    languages: d.languages,
+    active: d.active,
+    featured: d.featured,
+    // Base name = the primary locale's name (booking-matching key + fallback).
+    options: d.options.map((o, i) => ({
+      name: tr[primary]?.options?.[i]?.name?.trim() || o.name,
+      priceDeltaCents: o.priceDeltaCents,
+    })),
+    extras: d.extras.map((e, i) => ({
+      name: tr[primary]?.extras?.[i]?.name?.trim() || e.name,
+      priceCents: e.priceCents,
+    })),
+    translations: tr,
+  };
 }
 
 export const serviceCatalogService = {
@@ -65,40 +109,14 @@ export const serviceCatalogService = {
     assertCan(actor, 'create', 'service');
     const scope = await scopeTenant(actor, targetTenantId);
     const d = createServiceSchema.parse(input);
-    const slug = d.slug ?? slugify(d.title);
+    const primary = primaryLocaleOf(d.translations as Translations);
+    const slug = d.slug ?? slugify((d.translations as Translations)[primary]?.title ?? '');
 
     if (await serviceRepository.findBySlug(scope, slug)) {
       throw ApiError.badRequest(`Slug "${slug}" already exists for this tenant.`);
     }
 
-    return serviceRepository.create(scope, {
-      categoryId: d.categoryId ?? null,
-      type: d.type,
-      slug,
-      title: d.title,
-      subtitle: d.subtitle ?? null,
-      description: d.description ?? null,
-      tags: d.tags,
-      coverUrl: d.coverUrl || null,
-      thumbUrl: d.thumbUrl || null,
-      priceMode: d.priceMode,
-      priceCents: d.priceCents,
-      currency: d.currency,
-      acceptedCurrencies: d.acceptedCurrencies,
-      priceUnit: d.priceUnit ?? null,
-      requiresDate: d.requiresDate,
-      minPeople: d.minPeople ?? null,
-      maxPeople: d.maxPeople ?? null,
-      durationMinutes: d.durationMinutes ?? null,
-      languages: d.languages,
-      active: d.active,
-      featured: d.featured,
-      options: d.options,
-      extras: d.extras,
-      included: d.included,
-      info: d.info,
-      translations: d.translations ?? null,
-    });
+    return serviceRepository.create(scope, toRepoData(d, slug));
   },
 
   async update(actor: Actor, id: string, input: UpdateServiceInput): Promise<Service> {
@@ -106,39 +124,13 @@ export const serviceCatalogService = {
     const scope = await scopeTenant(actor);
     // The edit wizard submits the full shape → full replace.
     const d = createServiceSchema.parse(input);
-    const slug = d.slug ?? slugify(d.title);
+    const primary = primaryLocaleOf(d.translations as Translations);
+    const slug = d.slug ?? slugify((d.translations as Translations)[primary]?.title ?? '');
     const clash = await serviceRepository.findBySlug(scope, slug);
     if (clash && clash.id !== id) {
       throw ApiError.badRequest(`Slug "${slug}" already exists for this tenant.`);
     }
-    const updated = await serviceRepository.update(scope, id, {
-      categoryId: d.categoryId ?? null,
-      type: d.type,
-      slug,
-      title: d.title,
-      subtitle: d.subtitle ?? null,
-      description: d.description ?? null,
-      tags: d.tags,
-      coverUrl: d.coverUrl || null,
-      thumbUrl: d.thumbUrl || null,
-      priceMode: d.priceMode,
-      priceCents: d.priceCents,
-      currency: d.currency,
-      acceptedCurrencies: d.acceptedCurrencies,
-      priceUnit: d.priceUnit ?? null,
-      requiresDate: d.requiresDate,
-      minPeople: d.minPeople ?? null,
-      maxPeople: d.maxPeople ?? null,
-      durationMinutes: d.durationMinutes ?? null,
-      languages: d.languages,
-      active: d.active,
-      featured: d.featured,
-      options: d.options,
-      extras: d.extras,
-      included: d.included,
-      info: d.info,
-      translations: d.translations ?? null,
-    });
+    const updated = await serviceRepository.update(scope, id, toRepoData(d, slug));
     if (!updated) throw ApiError.notFound('Service not found.');
     return updated;
   },
@@ -169,16 +161,16 @@ export const publicServiceCatalog = {
       skip: (page - 1) * pageSize,
       take: pageSize,
       search,
+      locale,
     });
-    const resolved = locale ? items.map((s) => resolveServiceLocale(s, locale)) : items;
-    return { items: resolved, total, page, pageSize };
+    return { items, total, page, pageSize };
   },
 
   async getBySlug(tenantSlug: string, serviceSlug: string, locale?: string): Promise<Service> {
     const tenantId = await serviceRepository.tenantIdBySlug(tenantSlug);
     if (!tenantId) throw ApiError.notFound('Unknown tenant.');
-    const svc = await serviceRepository.findActiveBySlug(tenantId, serviceSlug);
+    const svc = await serviceRepository.findActiveBySlug(tenantId, serviceSlug, locale);
     if (!svc) throw ApiError.notFound('Service not found.');
-    return locale ? resolveServiceLocale(svc, locale) : svc;
+    return svc;
   },
 };

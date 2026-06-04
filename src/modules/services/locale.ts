@@ -1,34 +1,83 @@
-import type { Service } from './types';
-
-/** Use the override when it has content, else fall back to the default. */
-const or = (override: string | undefined, fallback: string): string =>
-  override && override.trim() ? override : fallback;
+import type {
+  ServiceIncluded,
+  ServiceInfo,
+  ServiceLocaleFields,
+  ServiceTranslations,
+} from './types';
 
 /**
- * Overlay a service's per-locale text overrides onto its default fields.
- * Missing translations fall back to the default language. Arrays (options,
- * extras, included, info) are matched by index against the default list, so
- * prices/structure always come from the default and only the text is swapped.
+ * Peer-locale text resolution.
+ *
+ * A service stores ALL of its human text inside `translations`, keyed by locale
+ * — there is no "canonical" language column. `resolveServiceText` reads the
+ * requested locale first, then falls back across the other locales so a service
+ * that has only French still renders for an English visitor (and vice-versa).
  */
-export function resolveServiceLocale(s: Service, locale: string): Service {
-  const tr = s.translations?.[locale];
-  if (!tr) return s;
-  return {
-    ...s,
-    title: or(tr.title, s.title),
-    subtitle: or(tr.subtitle, s.subtitle ?? '') || s.subtitle,
-    description: or(tr.description, s.description ?? '') || s.description,
-    priceUnit: or(tr.priceUnit, s.priceUnit ?? '') || s.priceUnit,
-    tags: tr.tags && tr.tags.length ? tr.tags : s.tags,
-    options: s.options.map((o, i) => ({ ...o, name: or(tr.options?.[i]?.name, o.name) })),
-    extras: s.extras.map((e, i) => ({ ...e, name: or(tr.extras?.[i]?.name, e.name) })),
-    included: s.included.map((inc, i) => ({
-      title: or(tr.included?.[i]?.title, inc.title),
-      description: or(tr.included?.[i]?.description, inc.description),
-    })),
-    info: s.info.map((it, i) => ({
-      label: or(tr.info?.[i]?.label, it.label),
-      value: or(tr.info?.[i]?.value, it.value),
-    })),
+
+// Fallback order consulted after the requested locale, before any remaining one.
+const FALLBACK = ['fr', 'en'];
+
+const filled = (s?: string): boolean => Boolean(s && s.trim());
+
+/** Locales to consult in order: requested → fr → en → whatever else exists. */
+function localeChain(tr: ServiceTranslations, locale?: string): string[] {
+  const chain = [locale, ...FALLBACK, ...Object.keys(tr)].filter(
+    (l): l is string => Boolean(l) && Boolean(tr[l as string]),
+  );
+  return [...new Set(chain)];
+}
+
+export interface ResolvedServiceText {
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  priceUnit: string | null;
+  tags: string[];
+  included: ServiceIncluded[];
+  info: ServiceInfo[];
+  /** Localized name for the option/extra at `index`, falling back to `base`. */
+  optionName: (index: number, base: string) => string;
+  extraName: (index: number, base: string) => string;
+}
+
+/** Resolve a service's display text for `locale` from its peer translations. */
+export function resolveServiceText(
+  translations: ServiceTranslations | null,
+  locale?: string,
+): ResolvedServiceText {
+  const tr = translations ?? {};
+  const chain = localeChain(tr, locale);
+
+  const str = (get: (f: ServiceLocaleFields) => string | undefined): string | undefined => {
+    for (const l of chain) {
+      const v = get(tr[l]!);
+      if (filled(v)) return v;
+    }
+    return undefined;
   };
+  const arr = <T>(get: (f: ServiceLocaleFields) => T[] | undefined): T[] | undefined => {
+    for (const l of chain) {
+      const v = get(tr[l]!);
+      if (Array.isArray(v) && v.length) return v;
+    }
+    return undefined;
+  };
+
+  return {
+    title: str((f) => f.title) ?? '',
+    subtitle: str((f) => f.subtitle) ?? null,
+    description: str((f) => f.description) ?? null,
+    priceUnit: str((f) => f.priceUnit) ?? null,
+    tags: arr((f) => f.tags) ?? [],
+    included: arr((f) => f.included) ?? [],
+    info: arr((f) => f.info) ?? [],
+    optionName: (i, base) => str((f) => f.options?.[i]?.name) ?? base,
+    extraName: (i, base) => str((f) => f.extras?.[i]?.name) ?? base,
+  };
+}
+
+/** Which locales are "complete" enough to publish (have a title). */
+export function translationCoverage(tr: ServiceTranslations | null): string[] {
+  if (!tr) return [];
+  return Object.keys(tr).filter((l) => filled(tr[l]?.title));
 }

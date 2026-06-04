@@ -1,17 +1,17 @@
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
-import type {
-  Service,
-  ServiceIncluded,
-  ServiceInfo,
-  ServiceTranslations,
-} from '../types';
+import type { Service, ServiceTranslations } from '../types';
 import type { PriceMode, ServiceType } from '../validation';
+import { resolveServiceText } from '../locale';
 
 /**
  * Services · repository (tenant-scoped data access). EVERY method takes a
  * `tenantId` and filters by it (row-level isolation).
+ *
+ * All human text lives in the `translations` JSON (peer locales, no canonical
+ * column). Reads accept an optional `locale` so the resolved `title`/
+ * `description`/etc. on the returned domain object are in the caller's language.
  */
 
 export interface ListServicesArgs {
@@ -19,23 +19,19 @@ export interface ListServicesArgs {
   skip: number;
   take: number;
   search?: string;
+  locale?: string;
 }
 
 export interface CreateServiceData {
   categoryId?: string | null;
   type: ServiceType;
   slug: string;
-  title: string;
-  subtitle?: string | null;
-  description?: string | null;
-  tags: string[];
   coverUrl?: string | null;
   thumbUrl?: string | null;
   priceMode: PriceMode;
   priceCents: number;
   currency: string;
   acceptedCurrencies: string[];
-  priceUnit?: string | null;
   requiresDate: boolean;
   minPeople?: number | null;
   maxPeople?: number | null;
@@ -43,11 +39,11 @@ export interface CreateServiceData {
   languages: string[];
   active: boolean;
   featured: boolean;
+  /** Base name (neutral key) + price; localized names live in `translations`. */
   options: { name: string; priceDeltaCents: number }[];
   extras: { name: string; priceCents: number }[];
-  included: ServiceIncluded[];
-  info: ServiceInfo[];
-  translations: ServiceTranslations | null;
+  /** Single source of truth for all localized text (>= 1 locale, keyed). */
+  translations: ServiceTranslations;
 }
 
 /** Full update = the create shape; nested relations are rebuilt in place. */
@@ -61,25 +57,27 @@ const withRelations = {
 
 type ServiceRow = Prisma.ServiceGetPayload<{ include: typeof withRelations }>;
 
-function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>): Service {
+function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>, locale?: string): Service {
   const r = row as ServiceRow;
+  const translations = (r.translations as ServiceTranslations | null) ?? null;
+  const text = resolveServiceText(translations, locale);
   return {
     id: r.id,
     tenantId: r.tenantId,
     categoryId: r.categoryId,
     type: r.type,
     slug: r.slug,
-    title: r.title,
-    subtitle: r.subtitle,
-    description: r.description,
-    tags: r.tags,
+    title: text.title,
+    subtitle: text.subtitle,
+    description: text.description,
+    tags: text.tags,
     coverUrl: r.coverUrl,
     thumbUrl: r.thumbUrl,
     priceMode: r.priceMode,
     priceCents: r.priceCents,
     currency: r.currency,
     acceptedCurrencies: r.acceptedCurrencies,
-    priceUnit: r.priceUnit,
+    priceUnit: text.priceUnit,
     requiresDate: r.requiresDate,
     minPeople: r.minPeople,
     maxPeople: r.maxPeople,
@@ -89,68 +87,70 @@ function toDomain(row: ServiceRow | Prisma.ServiceGetPayload<object>): Service {
     featured: r.featured,
     ratingCached: r.ratingCached,
     reviewCount: r.reviewCountCached,
-    included: (r.includedJson as ServiceIncluded[] | null) ?? [],
-    info: (r.infoJson as ServiceInfo[] | null) ?? [],
-    options: (r.options ?? []).map((o) => ({
-      name: o.name,
+    included: text.included,
+    info: text.info,
+    options: (r.options ?? []).map((o, i) => ({
+      name: text.optionName(i, o.name),
       priceDeltaCents: o.priceDeltaCents,
     })),
-    extras: (r.extras ?? []).map((e) => ({
-      name: e.name,
+    extras: (r.extras ?? []).map((e, i) => ({
+      name: text.extraName(i, e.name),
       priceCents: e.priceCents,
     })),
     media: (r.media ?? []).map((m) => ({ url: m.url, type: m.type, alt: m.alt })),
-    translations: (r.translations as ServiceTranslations | null) ?? null,
+    translations,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };
 }
 
+/** Search across slug + the title of any stored locale (JSON path match). */
+function searchWhere(search?: string): Prisma.ServiceWhereInput {
+  if (!search) return {};
+  return {
+    OR: [
+      { slug: { contains: search, mode: 'insensitive' } },
+      { translations: { path: ['en', 'title'], string_contains: search } },
+      { translations: { path: ['fr', 'title'], string_contains: search } },
+    ],
+  };
+}
+
 export const serviceRepository = {
-  async findMany({ tenantId, skip, take, search }: ListServicesArgs) {
-    const where = {
-      tenantId,
-      ...(search
-        ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' as const } },
-              { slug: { contains: search, mode: 'insensitive' as const } },
-            ],
-          }
-        : {}),
-    };
+  async findMany({ tenantId, skip, take, search, locale }: ListServicesArgs) {
+    const where = { tenantId, ...searchWhere(search) };
     const [rows, total] = await Promise.all([
       prisma.service.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
       prisma.service.count({ where }),
     ]);
-    return { items: rows.map(toDomain), total };
+    return { items: rows.map((r) => toDomain(r, locale)), total };
   },
 
-  async findById(tenantId: string, id: string) {
+  async findById(tenantId: string, id: string, locale?: string) {
     const row = await prisma.service.findFirst({
       where: { id, tenantId },
       include: withRelations,
     });
-    return row ? toDomain(row) : null;
+    return row ? toDomain(row, locale) : null;
   },
 
-  async findBySlug(tenantId: string, slug: string) {
+  async findBySlug(tenantId: string, slug: string, locale?: string) {
     const row = await prisma.service.findUnique({
       where: { tenantId_slug: { tenantId, slug } },
       include: withRelations,
     });
-    return row ? toDomain(row) : null;
+    return row ? toDomain(row, locale) : null;
   },
 
   /** Public catalog: active services only. */
-  async findManyActive(args: { tenantId: string; skip: number; take: number; search?: string }) {
-    const where = {
-      tenantId: args.tenantId,
-      active: true,
-      ...(args.search
-        ? { title: { contains: args.search, mode: 'insensitive' as const } }
-        : {}),
-    };
+  async findManyActive(args: {
+    tenantId: string;
+    skip: number;
+    take: number;
+    search?: string;
+    locale?: string;
+  }) {
+    const where = { tenantId: args.tenantId, active: true, ...searchWhere(args.search) };
     const [rows, total] = await Promise.all([
       prisma.service.findMany({
         where,
@@ -160,16 +160,16 @@ export const serviceRepository = {
       }),
       prisma.service.count({ where }),
     ]);
-    return { items: rows.map(toDomain), total };
+    return { items: rows.map((r) => toDomain(r, args.locale)), total };
   },
 
   /** Public detail: a single active service (with options/extras/media). */
-  async findActiveBySlug(tenantId: string, slug: string) {
+  async findActiveBySlug(tenantId: string, slug: string, locale?: string) {
     const row = await prisma.service.findFirst({
       where: { tenantId, slug, active: true },
       include: withRelations,
     });
-    return row ? toDomain(row) : null;
+    return row ? toDomain(row, locale) : null;
   },
 
   async tenantIdBySlug(slug: string) {
@@ -181,21 +181,15 @@ export const serviceRepository = {
   },
 
   async create(tenantId: string, data: CreateServiceData): Promise<Service> {
-    const { options, extras, included, info, categoryId, translations, ...scalars } = data;
+    const { options, extras, categoryId, translations, ...scalars } = data;
     const row = await prisma.service.create({
       data: {
         tenantId,
         ...(categoryId ? { categoryId } : {}),
         ...scalars,
-        includedJson: included as unknown as Prisma.InputJsonValue,
-        infoJson: info as unknown as Prisma.InputJsonValue,
-        ...(translations ? { translations: translations as unknown as Prisma.InputJsonValue } : {}),
-        options: {
-          create: options.map((o, i) => ({ ...o, sortOrder: i })),
-        },
-        extras: {
-          create: extras.map((e, i) => ({ ...e, sortOrder: i })),
-        },
+        translations: translations as unknown as Prisma.InputJsonValue,
+        options: { create: options.map((o, i) => ({ ...o, sortOrder: i })) },
+        extras: { create: extras.map((e, i) => ({ ...e, sortOrder: i })) },
       },
       include: withRelations,
     });
@@ -209,7 +203,7 @@ export const serviceRepository = {
     });
     if (!exists) return null;
 
-    const { options, extras, included, info, categoryId, translations, ...scalars } = data;
+    const { options, extras, categoryId, translations, ...scalars } = data;
     await prisma.$transaction([
       prisma.serviceOption.deleteMany({ where: { serviceId: id } }),
       prisma.serviceExtra.deleteMany({ where: { serviceId: id } }),
@@ -218,9 +212,7 @@ export const serviceRepository = {
         data: {
           ...scalars,
           categoryId: categoryId ?? null,
-          includedJson: included as unknown as Prisma.InputJsonValue,
-          infoJson: info as unknown as Prisma.InputJsonValue,
-          translations: (translations ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          translations: translations as unknown as Prisma.InputJsonValue,
           options: { create: options.map((o, i) => ({ ...o, sortOrder: i })) },
           extras: { create: extras.map((e, i) => ({ ...e, sortOrder: i })) },
         },

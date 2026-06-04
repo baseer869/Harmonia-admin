@@ -2,6 +2,8 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
 import { ApiError } from '@/lib/api';
+import { resolveServiceText } from '@/modules/services/locale';
+import type { ServiceTranslations } from '@/modules/services/types';
 import type { Reservation, ReservationDetail, ReservationItemDetail } from '../types';
 import type { BookingItemInput } from '../validation';
 
@@ -149,6 +151,7 @@ export const reservationRepository = {
     customerId: string,
     items: BookingItemInput[],
     notes?: string,
+    locale = 'fr',
   ): Promise<BookingResult> {
     return prisma.$transaction(async (tx) => {
       let subtotal = 0;
@@ -167,17 +170,22 @@ export const reservationRepository = {
       for (const it of items) {
         const svc = await tx.service.findFirst({
           where: { id: it.serviceId, tenantId, active: true },
-          include: { options: true },
+          include: { options: { orderBy: { sortOrder: 'asc' } } },
         });
         if (!svc) throw ApiError.badRequest('A selected service is unavailable.');
         currency = svc.currency;
+        const text = resolveServiceText(svc.translations as ServiceTranslations | null, locale);
 
         let unit = svc.priceCents;
         if (svc.priceMode === 'PER_PERSON') {
           unit = svc.priceCents * Math.max(1, it.people ?? 1);
         }
         if (it.optionName) {
-          const opt = svc.options.find((o) => o.name === it.optionName);
+          // The client may send the option name in the customer's language —
+          // match against both the base name and the localized name by index.
+          const opt = svc.options.find(
+            (o, i) => o.name === it.optionName || text.optionName(i, o.name) === it.optionName,
+          );
           if (opt) unit += opt.priceDeltaCents;
         }
         const extrasTotal = (it.extras ?? []).reduce((s, e) => s + e.priceCents, 0);
@@ -187,9 +195,13 @@ export const reservationRepository = {
         const when = it.scheduledAt ? new Date(it.scheduledAt) : null;
         if (when && !firstScheduledAt) firstScheduledAt = when;
 
+        // Snapshot the title in the booking's language (peer translations, with
+        // fallback to any other available locale).
+        const title = text.title || 'Service';
+
         itemRows.push({
           serviceId: svc.id,
-          title: svc.title,
+          title,
           quantity: it.quantity,
           unitPriceCents: lineUnit,
           scheduledAt: when,
@@ -203,6 +215,7 @@ export const reservationRepository = {
           tenantId,
           customerId,
           code,
+          locale,
           status: 'PENDING',
           subtotalCents: subtotal,
           totalCents: subtotal,

@@ -287,9 +287,6 @@ model Service {
   categoryId      String?
   category        Category? @relation(fields: [categoryId], references: [id])
   slug            String
-  title           String
-  subtitle        String?
-  description     String?
   type            ServiceType @default(EXPERIENCE)
 
   // Pricing & booking parameters (drive the customer booking form)
@@ -297,22 +294,21 @@ model Service {
   currency        String    @default("MAD") // base/price currency
   acceptedCurrencies String[] @default([]) // currencies accepted for payment
   priceMode       PriceMode @default(PER_PERSON)
-  priceUnit       String? // e.g. "per person", "per trip"
   requiresDate    Boolean   @default(true)
   minPeople       Int?
   maxPeople       Int?
   durationMinutes Int?
   capacity        Int?
   languages       String[]  @default([])
-  tags            String[]  @default([])
 
-  // Media + rich display content
+  // Media
   coverUrl     String?
   thumbUrl     String?
-  includedJson Json? // [{ title, description }]
-  infoJson     Json? // [{ label, value }]
-  // Per-locale overrides of the human text (default lang = the main columns).
-  // e.g. { "fr": { title, subtitle, description, priceUnit, tags[], options[], extras[], included[], info[] } }
+
+  // ALL human text lives here — peer locales, no canonical column. Keyed by
+  // locale, e.g. { "fr": { title, subtitle, description, priceUnit, tags[],
+  // options[], extras[], included[], info[] }, "en": { … } }. At least one
+  // locale carries a title; reads fall back across locales.
   translations Json?
 
   active          Boolean @default(true)

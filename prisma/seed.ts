@@ -79,9 +79,20 @@ async function main() {
       tenantId: tenant.id,
       categoryId: adventure.id,
       slug: 'desert-excursion',
-      title: 'Agafay Desert Excursion',
-      subtitle: 'Sunset, dunes & a Berber dinner',
-      description: 'A guided half-day excursion into the Agafay desert.',
+      translations: {
+        en: {
+          title: 'Agafay Desert Excursion',
+          subtitle: 'Sunset, dunes & a Berber dinner',
+          description: 'A guided half-day excursion into the Agafay desert.',
+          tags: ['Desert', 'Sunset', 'Berber dinner'],
+        },
+        fr: {
+          title: "Excursion dans le désert d'Agafay",
+          subtitle: 'Coucher de soleil, dunes & dîner berbère',
+          description: "Une excursion guidée d'une demi-journée dans le désert d'Agafay.",
+          tags: ['Désert', 'Coucher de soleil', 'Dîner berbère'],
+        },
+      },
       priceCents: 25000,
       currency: 'MAD',
       priceMode: 'PER_PERSON',
@@ -89,7 +100,6 @@ async function main() {
       capacity: 8,
       maxPeople: 8,
       featured: true,
-      tags: ['Désert', 'Coucher de soleil', 'Dîner berbère'],
       coverUrl:
         'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200&q=80',
       thumbUrl:
@@ -103,16 +113,26 @@ async function main() {
       tenantId: tenant.id,
       categoryId: wellness.id,
       slug: 'hammam-ritual',
-      title: 'Traditional Hammam Ritual',
-      subtitle: 'Argan oil & black soap',
-      description: 'An authentic hammam & massage ritual.',
+      translations: {
+        en: {
+          title: 'Traditional Hammam Ritual',
+          subtitle: 'Argan oil & black soap',
+          description: 'An authentic hammam & massage ritual.',
+          tags: ['Wellness', 'Argan', 'Spa'],
+        },
+        fr: {
+          title: 'Rituel de hammam traditionnel',
+          subtitle: 'Huile d’argan & savon noir',
+          description: 'Un authentique rituel de hammam et de massage.',
+          tags: ['Bien-être', 'Argan', 'Spa'],
+        },
+      },
       priceCents: 20000,
       currency: 'MAD',
       priceMode: 'PER_PERSON',
       durationMinutes: 90,
       capacity: 4,
       maxPeople: 4,
-      tags: ['Bien-être', 'Argan', 'Spa'],
       coverUrl:
         'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=1200&q=80',
       thumbUrl:
