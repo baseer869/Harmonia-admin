@@ -68,6 +68,7 @@ interface Dict {
     practicalTitle: string; addInfo: string; infoLabel: string; infoValue: string;
     noneAdded: string; remove: string;
     rType: string; rTitle: string; rPrice: string; rOptions: string; rExtras: string;
+    breakdown: string; basePrice: string; exampleTotal: string; variantsLabel: string; addonsLabel: string;
     rIncluded: string; onQuote: string; noCover: string; untitled: string;
     accepted: string; acceptedHint: string; baseTag: string;
     priceCurrency: string; priceCurrencyHint: string;
@@ -185,14 +186,16 @@ const DICT: Record<Locale, Dict> = {
       tExperience: 'Experience (date · people)', tTransfer: 'Transfer (per trip)', tProduct: 'Product (quantity)', tQuote: 'On quote (enquiry)',
       mPerPerson: 'Per person', mPerTrip: 'Per trip', mFixed: 'Fixed', mOnQuote: 'On quote',
       yes: 'Yes', no: 'No', photoNote: 'One photo is enough — it’s used as both the cover and the thumbnail.',
-      optionsTitle: 'Options', addOption: 'Add option', optionName: 'e.g. Standard, Premium', priceDelta: 'Extra price (+/–)',
+      optionsTitle: 'Variants', addOption: 'Add variant', optionName: 'e.g. Full-time, Half-time', priceDelta: 'Variant price (+)',
       extrasTitle: 'Add-ons', addExtra: 'Add add-on', extraName: 'e.g. Private guide, Extra night', priceCol: 'Price',
-      optionsHint: 'Optional variants of this service at different prices (e.g. Standard, Premium). Leave empty if not needed.',
+      optionsHint: 'The customer picks ONE variant. Its price is ADDED to the base price (set base = 0 if the price lives entirely in the variants).',
       extrasHint: 'Optional paid add-ons a customer can include. Leave empty if not needed.',
       includedTitle: "What's included", addItem: 'Add item', itemTitle: 'Title', itemDesc: 'Description',
       practicalTitle: 'Practical info', addInfo: 'Add info', infoLabel: 'Label (e.g. Duration)', infoValue: 'Value',
       noneAdded: 'None added.', remove: 'Remove',
-      rType: 'Type', rTitle: 'Title', rPrice: 'Price', rOptions: 'Options', rExtras: 'Extras',
+      rType: 'Type', rTitle: 'Title', rPrice: 'Base price', rOptions: 'Options', rExtras: 'Extras',
+      breakdown: 'Price breakdown', basePrice: 'Base price', exampleTotal: 'Example total (base + 1st variant + all add-ons)',
+      variantsLabel: 'Variants', addonsLabel: 'Add-ons',
       rIncluded: 'Included', onQuote: 'On quote', noCover: 'No cover image', untitled: 'Untitled service',
       accepted: 'Also accept payment in', acceptedHint: 'Extra currencies a customer can pay in — the price currency is always included.', baseTag: 'base',
       priceCurrency: 'Price currency', priceCurrencyHint: 'The currency you enter the price in.',
@@ -311,14 +314,16 @@ const DICT: Record<Locale, Dict> = {
       tExperience: 'Expérience (date · personnes)', tTransfer: 'Transfert (par trajet)', tProduct: 'Produit (quantité)', tQuote: 'Sur devis (demande)',
       mPerPerson: 'Par personne', mPerTrip: 'Par trajet', mFixed: 'Fixe', mOnQuote: 'Sur devis',
       yes: 'Oui', no: 'Non', photoNote: 'Une seule photo suffit — utilisée comme couverture et miniature.',
-      optionsTitle: 'Options', addOption: 'Ajouter une option', optionName: 'ex. Standard, Premium', priceDelta: 'Prix en plus (+/–)',
+      optionsTitle: 'Variantes', addOption: 'Ajouter une variante', optionName: 'ex. Temps plein, Demi-journée', priceDelta: 'Prix de la variante (+)',
       extrasTitle: 'Suppléments', addExtra: 'Ajouter un supplément', extraName: 'ex. Guide privé, Nuit supplémentaire', priceCol: 'Prix',
-      optionsHint: 'Variantes facultatives de ce service à différents prix (ex. Standard, Premium). Laissez vide si inutile.',
+      optionsHint: 'Le client choisit UNE variante. Son prix est AJOUTÉ au prix de base (mettez le prix de base à 0 si le prix est entièrement dans les variantes).',
       extrasHint: 'Suppléments payants facultatifs que le client peut ajouter. Laissez vide si inutile.',
       includedTitle: 'Ce qui est inclus', addItem: 'Ajouter un élément', itemTitle: 'Titre', itemDesc: 'Description',
       practicalTitle: 'Infos pratiques', addInfo: 'Ajouter une info', infoLabel: 'Libellé (ex. Durée)', infoValue: 'Valeur',
       noneAdded: 'Aucun ajouté.', remove: 'Supprimer',
-      rType: 'Type', rTitle: 'Titre', rPrice: 'Prix', rOptions: 'Options', rExtras: 'Extras',
+      rType: 'Type', rTitle: 'Titre', rPrice: 'Prix de base', rOptions: 'Options', rExtras: 'Extras',
+      breakdown: 'Détail du prix', basePrice: 'Prix de base', exampleTotal: 'Total exemple (base + 1re variante + tous les suppléments)',
+      variantsLabel: 'Variantes', addonsLabel: 'Suppléments',
       rIncluded: 'Inclus', onQuote: 'Sur devis', noCover: 'Pas de couverture', untitled: 'Service sans titre',
       accepted: 'Accepter aussi le paiement en', acceptedHint: 'Devises supplémentaires acceptées — la devise du prix est toujours incluse.', baseTag: 'base',
       priceCurrency: 'Devise du prix', priceCurrencyHint: 'La devise dans laquelle vous saisissez le prix.',

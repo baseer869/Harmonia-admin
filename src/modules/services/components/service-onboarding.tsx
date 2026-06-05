@@ -702,9 +702,22 @@ function ReviewStep({
     [t.svcForm.rTitle, block.title],
     [t.svcForm.rPrice, priceText],
     [t.svcForm.contentLanguage, langName],
-    [t.svcForm.rOptions, String(v.optionPrices.length)],
-    [t.svcForm.rExtras, String(v.extraPrices.length)],
   ];
+
+  // Live price breakdown so the admin sees exactly what variants/add-ons add up to.
+  const isQuoteType = v.type === 'QUOTE';
+  const cur = v.currency;
+  const num = (x: unknown) => Number(x) || 0;
+  const baseNum = num(v.price);
+  const variants = v.optionPrices
+    .map((op, i) => ({ name: (block.options?.[i]?.name ?? '').trim(), price: num(op.priceDelta) }))
+    .filter((x) => x.name);
+  const addons = v.extraPrices
+    .map((ep, i) => ({ name: (block.extras?.[i]?.name ?? '').trim(), price: num(ep.price) }))
+    .filter((x) => x.name);
+  const addonsSum = addons.reduce((s, a) => s + a.price, 0);
+  const exampleTotal = baseNum + (variants[0]?.price ?? 0) + addonsSum;
+  const fmt = (n: number) => `${n.toLocaleString()} ${cur}`;
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-lg border">
@@ -731,6 +744,48 @@ function ReviewStep({
           </div>
         ))}
       </div>
+
+      {!isQuoteType && (
+        <div className="overflow-hidden rounded-lg border">
+          <div className="bg-muted/40 px-4 py-2.5 text-sm font-semibold">{t.svcForm.breakdown}</div>
+          <div className="divide-y text-[15px]">
+            <div className="flex justify-between gap-4 px-4 py-2.5">
+              <span className="text-muted-foreground">{t.svcForm.basePrice}</span>
+              <span className="font-medium">{`${fmt(baseNum)} · ${modeLabel[v.priceMode]}`}</span>
+            </div>
+
+            {variants.length > 0 && (
+              <div className="px-4 pt-2.5 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {t.svcForm.variantsLabel}
+              </div>
+            )}
+            {variants.map((it, i) => (
+              <div key={`v${i}`} className="flex justify-between gap-4 px-4 py-2 pl-7">
+                <span>{it.name}</span>
+                <span className="font-medium">+ {fmt(it.price)}</span>
+              </div>
+            ))}
+
+            {addons.length > 0 && (
+              <div className="px-4 pt-2.5 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {t.svcForm.addonsLabel}
+              </div>
+            )}
+            {addons.map((it, i) => (
+              <div key={`a${i}`} className="flex justify-between gap-4 px-4 py-2 pl-7">
+                <span>{it.name}</span>
+                <span className="font-medium">+ {fmt(it.price)}</span>
+              </div>
+            ))}
+
+            <div className="bg-primary/5 flex justify-between gap-4 px-4 py-3 font-semibold">
+              <span>{t.svcForm.exampleTotal}</span>
+              <span className="text-primary">{fmt(exampleTotal)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {rootError ? <p className="text-destructive text-sm">{rootError}</p> : null}
     </div>
   );
