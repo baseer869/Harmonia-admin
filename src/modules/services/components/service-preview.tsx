@@ -8,29 +8,15 @@ import {
   Clock,
   Languages,
   Pencil,
-  Star,
   Tag,
   Users,
 } from 'lucide-react';
 
 import { Button, Modal, StatusBadge } from '@/components/ui';
 import { fromMinorUnits } from '@/constants';
+import { useAdminI18n } from '@/lib/i18n/provider';
 
 import type { Service } from '../types';
-
-const TYPE_LABEL: Record<Service['type'], string> = {
-  EXPERIENCE: 'Experience',
-  TRANSFER: 'Transfer',
-  PRODUCT: 'Product',
-  QUOTE: 'On quote',
-};
-
-const MODE_LABEL: Record<Service['priceMode'], string> = {
-  PER_PERSON: 'per person',
-  PER_TRIP: 'per trip',
-  FIXED: 'fixed',
-  ON_QUOTE: 'on quote',
-};
 
 function money(cents: number, currency: string): string {
   return `${fromMinorUnits(cents, currency).toLocaleString(undefined, {
@@ -61,8 +47,22 @@ export function ServicePreview({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useAdminI18n();
   if (!service) return null;
   const s = service;
+
+  const typeLabel: Record<Service['type'], string> = {
+    EXPERIENCE: t.svcForm.tExperience,
+    TRANSFER: t.svcForm.tTransfer,
+    PRODUCT: t.svcForm.tProduct,
+    QUOTE: t.svcForm.tQuote,
+  };
+  const modeLabel: Record<Service['priceMode'], string> = {
+    PER_PERSON: t.svcForm.mPerPerson,
+    PER_TRIP: t.svcForm.mPerTrip,
+    FIXED: t.svcForm.mFixed,
+    ON_QUOTE: t.svcForm.mOnQuote,
+  };
 
   return (
     <Modal
@@ -73,27 +73,22 @@ export function ServicePreview({
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="section-title truncate">{s.title}</h2>
           <span className="bg-accent text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
-            {TYPE_LABEL[s.type]}
+            {typeLabel[s.type]}
           </span>
           <StatusBadge
-            status={s.active ? 'Active' : 'Hidden'}
+            status={s.active ? t.common.active : t.common.hidden}
             tone={s.active ? 'green' : 'gray'}
           />
-          {s.featured ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-              <Star className="size-3 fill-current" /> Featured
-            </span>
-          ) : null}
         </div>
       }
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Close
+            {t.common.close}
           </Button>
           <Button asChild>
             <Link href={`/services/${s.id}/edit` as Route}>
-              <Pencil className="size-4" /> Edit service
+              <Pencil className="size-4" /> {t.svcForm.editTitle}
             </Link>
           </Button>
         </>
@@ -114,11 +109,11 @@ export function ServicePreview({
 
       <div className="bg-accent/40 mb-5 flex flex-wrap items-baseline gap-x-2 rounded-lg px-4 py-3">
         <span className="text-2xl font-semibold">
-          {s.type === 'QUOTE' ? 'On request' : money(s.priceCents, s.currency)}
+          {s.type === 'QUOTE' ? t.svcForm.onQuote : money(s.priceCents, s.currency)}
         </span>
         {s.type !== 'QUOTE' ? (
           <span className="text-muted-foreground text-sm">
-            {s.priceUnit || MODE_LABEL[s.priceMode]}
+            {s.priceUnit || modeLabel[s.priceMode]}
           </span>
         ) : null}
       </div>
@@ -126,23 +121,23 @@ export function ServicePreview({
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Meta
           icon={Calendar}
-          label="Date required"
-          value={s.requiresDate ? 'Yes' : 'No'}
+          label={t.svcForm.requiresDate}
+          value={s.requiresDate ? t.svcForm.yes : t.svcForm.no}
         />
         {s.maxPeople ? (
-          <Meta icon={Users} label="Max people" value={String(s.maxPeople)} />
+          <Meta icon={Users} label={t.svcForm.maxPeople} value={String(s.maxPeople)} />
         ) : null}
         {s.durationMinutes ? (
           <Meta
             icon={Clock}
-            label="Duration"
+            label={t.svcForm.duration}
             value={`${s.durationMinutes} min`}
           />
         ) : null}
         {s.languages.length ? (
           <Meta
             icon={Languages}
-            label="Languages"
+            label={t.svcForm.languages}
             value={s.languages.join(', ')}
           />
         ) : null}
@@ -150,7 +145,7 @@ export function ServicePreview({
 
       {s.description ? (
         <section className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold">Description</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t.svcForm.description}</h3>
           <p className="text-muted-foreground whitespace-pre-line text-sm leading-relaxed">
             {s.description}
           </p>
@@ -159,7 +154,7 @@ export function ServicePreview({
 
       {s.included.length ? (
         <section className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold">What&apos;s included</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t.svcForm.includedTitle}</h3>
           <ul className="space-y-2">
             {s.included.map((i, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm">
@@ -178,7 +173,7 @@ export function ServicePreview({
 
       {s.options.length ? (
         <section className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold">Options</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t.svcForm.optionsTitle}</h3>
           <div className="divide-y rounded-lg border">
             {s.options.map((o, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2.5 text-sm">
@@ -195,7 +190,7 @@ export function ServicePreview({
 
       {s.extras.length ? (
         <section className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold">Add-ons</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t.svcForm.extrasTitle}</h3>
           <div className="divide-y rounded-lg border">
             {s.extras.map((e, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2.5 text-sm">
@@ -211,7 +206,7 @@ export function ServicePreview({
 
       {s.info.length ? (
         <section className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold">Good to know</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t.svcForm.practicalTitle}</h3>
           <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
             {s.info.map((i, idx) => (
               <div key={idx} className="flex justify-between gap-4 text-sm">
@@ -226,12 +221,12 @@ export function ServicePreview({
       {s.tags.length ? (
         <div className="flex flex-wrap items-center gap-2">
           <Tag className="text-muted-foreground size-4" />
-          {s.tags.map((t) => (
+          {s.tags.map((tag) => (
             <span
-              key={t}
+              key={tag}
               className="bg-accent text-muted-foreground rounded-full px-2.5 py-0.5 text-xs"
             >
-              {t}
+              {tag}
             </span>
           ))}
         </div>
