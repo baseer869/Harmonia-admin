@@ -16,10 +16,14 @@ import {
   TableRow,
 } from '@/components/ui';
 
+import { DataTablePagination, type PaginationState } from './data-table-pagination';
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   emptyMessage?: string;
+  /** When supplied, renders the shared pager + record label below the table. */
+  pagination?: PaginationState;
 }
 
 /**
@@ -30,6 +34,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   emptyMessage = 'No results.',
+  pagination,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -38,6 +43,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
+    <div>
     <div className="overflow-x-auto">
       <Table>
         <TableHeader className="bg-muted/50">
@@ -82,6 +88,8 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
+    </div>
+      {pagination ? <DataTablePagination {...pagination} /> : null}
     </div>
   );
 }

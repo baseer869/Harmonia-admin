@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, Pencil } from 'lucide-react';
 
@@ -75,7 +76,8 @@ function buildColumns(t: Dict): ColumnDef<AdminUser>[] {
 
 export function UsersTable() {
   const { t } = useAdminI18n();
-  const { data, isLoading, isError, error } = useUsers();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useUsers({ page });
   if (isLoading)
     return <p className="text-muted-foreground p-4 text-sm">{t.lists.loadingUsers}</p>;
   if (isError)
@@ -85,6 +87,11 @@ export function UsersTable() {
       columns={buildColumns(t)}
       data={data?.items ?? []}
       emptyMessage={t.lists.emptyUsers}
+      pagination={
+        data
+          ? { page: data.page, pageSize: data.pageSize, total: data.total, onPageChange: setPage }
+          : undefined
+      }
     />
   );
 }

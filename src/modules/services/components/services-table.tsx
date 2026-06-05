@@ -85,7 +85,8 @@ function buildColumns(onPreview: (s: Service) => void, t: Dict): ColumnDef<Servi
 /** The tenant's own service catalog (scoped server-side by tenantId). */
 export function ServicesTable() {
   const { t } = useAdminI18n();
-  const { data, isLoading, isError, error } = useServices();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useServices({ page });
   const [preview, setPreview] = useState<Service | null>(null);
 
   if (isLoading) {
@@ -101,6 +102,11 @@ export function ServicesTable() {
         columns={buildColumns(setPreview, t)}
         data={data?.items ?? []}
         emptyMessage={t.services.empty}
+        pagination={
+          data
+            ? { page: data.page, pageSize: data.pageSize, total: data.total, onPageChange: setPage }
+            : undefined
+        }
       />
       <ServicePreview
         service={preview}

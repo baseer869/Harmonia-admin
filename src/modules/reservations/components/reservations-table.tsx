@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
@@ -109,7 +109,10 @@ export function ReservationsTable({
   search?: string;
 }) {
   const { t } = useAdminI18n();
-  const { data, isLoading, isError, error } = useReservations({ status, search });
+  const [page, setPage] = useState(1);
+  // Reset to the first page whenever the filters change.
+  useEffect(() => setPage(1), [status, search]);
+  const { data, isLoading, isError, error } = useReservations({ status, search, page });
   const [viewId, setViewId] = useState<string | null>(null);
 
   return (
@@ -123,6 +126,11 @@ export function ReservationsTable({
           columns={buildColumns(setViewId, t)}
           data={data?.items ?? []}
           emptyMessage={search || status ? t.bookings.emptyFiltered : t.bookings.empty}
+          pagination={
+            data
+              ? { page: data.page, pageSize: data.pageSize, total: data.total, onPageChange: setPage }
+              : undefined
+          }
         />
       )}
       <BookingDetailModal

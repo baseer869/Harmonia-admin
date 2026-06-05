@@ -1,5 +1,5 @@
 'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { http } from '@/lib/api';
 import type { Paginated } from '@/types';
 import type { Reservation, ReservationDetail, ReservationStatus } from '../types';
@@ -15,6 +15,7 @@ function qs(q?: Partial<ListReservationsQuery>) {
   if (!q) return '';
   const p = new URLSearchParams();
   if (q.page) p.set('page', String(q.page));
+  if (q.pageSize) p.set('pageSize', String(q.pageSize));
   if (q.status) p.set('status', q.status);
   if (q.search) p.set('search', q.search);
   const s = p.toString();
@@ -25,6 +26,7 @@ export function useReservations(query?: Partial<ListReservationsQuery>) {
   return useQuery({
     queryKey: reservationKeys.list(query ?? {}),
     queryFn: () => http.get<Paginated<Reservation>>(`/api/reservations${qs(query)}`),
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -45,6 +46,7 @@ export function useServices(query?: Partial<ListServicesQuery>) {
   return useQuery({
     queryKey: serviceKeys.list(q),
     queryFn: () => http.get<Paginated<Service>>(`/api/services${toQueryString(q)}`),
+    placeholderData: keepPreviousData,
   });
 }
 

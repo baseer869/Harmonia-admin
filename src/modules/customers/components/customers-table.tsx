@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
@@ -58,12 +59,22 @@ function buildColumns(t: Dict): ColumnDef<Customer>[] {
 
 export function CustomersTable() {
   const { t } = useAdminI18n();
-  const { data, isLoading, isError, error } = useCustomers();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useCustomers({ page });
   if (isLoading)
     return <p className="text-muted-foreground p-4 text-sm">{t.common.loading}</p>;
   if (isError)
     return <p className="text-destructive p-4 text-sm">{(error as Error).message}</p>;
   return (
-    <DataTable columns={buildColumns(t)} data={data?.items ?? []} emptyMessage={t.lists.emptyCustomers} />
+    <DataTable
+      columns={buildColumns(t)}
+      data={data?.items ?? []}
+      emptyMessage={t.lists.emptyCustomers}
+      pagination={
+        data
+          ? { page: data.page, pageSize: data.pageSize, total: data.total, onPageChange: setPage }
+          : undefined
+      }
+    />
   );
 }

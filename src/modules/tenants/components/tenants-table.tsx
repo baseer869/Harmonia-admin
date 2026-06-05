@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 
 import { Eye } from 'lucide-react';
@@ -59,7 +60,8 @@ function buildColumns(t: Dict): ColumnDef<Tenant>[] {
 /** Tenants listing — demonstrates Page → hook → /api → Module API → Service. */
 export function TenantsTable() {
   const { t } = useAdminI18n();
-  const { data, isLoading, isError, error } = useTenants();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useTenants({ page });
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t.lists.loadingTenants}</p>;
@@ -75,6 +77,11 @@ export function TenantsTable() {
       columns={buildColumns(t)}
       data={data?.items ?? []}
       emptyMessage={t.lists.emptyTenants}
+      pagination={
+        data
+          ? { page: data.page, pageSize: data.pageSize, total: data.total, onPageChange: setPage }
+          : undefined
+      }
     />
   );
 }

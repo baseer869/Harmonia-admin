@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -46,6 +47,7 @@ export function useTenants(query?: Partial<ListTenantsQuery>) {
     queryKey: tenantKeys.list(query ?? {}),
     queryFn: () =>
       http.get<Paginated<Tenant>>(`/api/tenants${toQueryString(query)}`),
+    placeholderData: keepPreviousData,
   });
 }
 

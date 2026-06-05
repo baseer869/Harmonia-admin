@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { http } from '@/lib/api';
 import type { Paginated } from '@/types';
@@ -28,6 +28,7 @@ export function useUsers(query?: Partial<ListUsersQuery>) {
   return useQuery({
     queryKey: userKeys.list(query ?? {}),
     queryFn: () => http.get<Paginated<AdminUser>>(`/api/users${qs(query)}`),
+    placeholderData: keepPreviousData,
   });
 }
 
