@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ChevronDown, ChevronRight, Languages, Plus, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Languages, Plus, Trash2, X } from 'lucide-react';
 
 import { Button, Input, Switch } from '@/components/ui';
 import {
@@ -511,7 +511,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
                 <Input type="number" min={0} step="0.01" {...register('price')} />
               </Field>
             )}
-            <Field label={t.svcForm.currency} error={errors.currency?.message}>
+            <Field label={t.svcForm.priceCurrency} hint={t.svcForm.priceCurrencyHint} error={errors.currency?.message}>
               <FieldSelect {...register('currency')}>
                 {CURRENCIES.map((c) => (
                   <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
@@ -520,39 +520,11 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
             </Field>
             {!isQuote && (
               <Field label={t.svcForm.accepted} hint={t.svcForm.acceptedHint} className="md:col-span-3">
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {CURRENCIES.map((c) => {
-                    const base = watch('currency') === c.code;
-                    const checked = base || (watch('acceptedCurrencies') ?? []).includes(c.code);
-                    return (
-                      <label
-                        key={c.code}
-                        className={cn(
-                          'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-[15px] transition-colors',
-                          checked ? 'border-primary bg-primary/5' : 'hover:bg-accent',
-                          base && 'opacity-70',
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={base}
-                          className="accent-primary"
-                          onChange={(e) => {
-                            const cur = watch('acceptedCurrencies') ?? [];
-                            setValue(
-                              'acceptedCurrencies',
-                              e.target.checked
-                                ? Array.from(new Set([...cur, c.code]))
-                                : cur.filter((x) => x !== c.code),
-                            );
-                          }}
-                        />
-                        {c.code}
-                      </label>
-                    );
-                  })}
-                </div>
+                <CurrencyMultiSelect
+                  base={watch('currency')}
+                  value={watch('acceptedCurrencies') ?? []}
+                  onChange={(next) => setValue('acceptedCurrencies', next)}
+                />
               </Field>
             )}
             <Field label={`${t.svcForm.priceUnit} (${langLabel(lang)})`} hint={t.svcForm.hintUnit}>
@@ -757,6 +729,118 @@ function ReviewStep({
         ))}
       </div>
       {rootError ? <p className="text-destructive text-sm">{rootError}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Multi-select currency dropdown (tag chips). The price/base currency is always
+ * included and locked; the admin adds any other currencies a customer may pay in.
+ */
+function CurrencyMultiSelect({
+  base,
+  value,
+  onChange,
+}: {
+  base: string;
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const { t } = useAdminI18n();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  // The base currency is always part of the selection and cannot be removed.
+  const chips = Array.from(new Set([base, ...value]));
+  const toggle = (code: string) => {
+    if (code === base) return;
+    onChange(value.includes(code) ? value.filter((x) => x !== code) : [...value, code]);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="border-input bg-background flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5 text-left"
+      >
+        {chips.map((code) => {
+          const locked = code === base;
+          return (
+            <span
+              key={code}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-medium',
+                locked ? 'bg-primary/10 text-primary' : 'bg-accent',
+              )}
+            >
+              {code}
+              {locked ? (
+                <span className="text-primary/60 text-[10px] uppercase">{t.svcForm.baseTag}</span>
+              ) : (
+                <span
+                  role="button"
+                  tabIndex={-1}
+                  aria-label={code}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggle(code);
+                  }}
+                  className="hover:text-destructive -mr-0.5 cursor-pointer"
+                >
+                  <X className="size-3.5" />
+                </span>
+              )}
+            </span>
+          );
+        })}
+        <ChevronDown className={cn('text-muted-foreground ml-auto size-4 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="bg-popover absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border p-1 shadow-md">
+          {CURRENCIES.map((c) => {
+            const on = chips.includes(c.code);
+            const locked = c.code === base;
+            return (
+              <button
+                key={c.code}
+                type="button"
+                disabled={locked}
+                onClick={() => toggle(c.code)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] transition-colors',
+                  on ? 'bg-primary/5' : 'hover:bg-accent',
+                  locked && 'opacity-70',
+                )}
+              >
+                <span
+                  className={cn(
+                    'grid size-4 shrink-0 place-items-center rounded border',
+                    on ? 'border-primary bg-primary text-white' : 'border-muted-foreground/40',
+                  )}
+                >
+                  {on && <Check className="size-3" />}
+                </span>
+                <span className="font-medium">{c.code}</span>
+                <span className="text-muted-foreground">— {c.name}</span>
+                {locked && (
+                  <span className="text-muted-foreground ml-auto text-xs uppercase">{t.svcForm.baseTag}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -66,7 +66,8 @@ interface Dict {
     noneAdded: string; remove: string;
     rType: string; rTitle: string; rPrice: string; rOptions: string; rExtras: string;
     rIncluded: string; onQuote: string; noCover: string; untitled: string;
-    accepted: string; acceptedHint: string;
+    accepted: string; acceptedHint: string; baseTag: string;
+    priceCurrency: string; priceCurrencyHint: string;
     stFrench: string; translateBtn: string; translating: string; frHint: string;
     contentLanguage: string; coverageLabel: string; translateTo: string;
     langFr: string; langEn: string; reqOneLang: string; autoTranslateHint: string;
@@ -168,7 +169,8 @@ const DICT: Record<Locale, Dict> = {
       noneAdded: 'None added.', remove: 'Remove',
       rType: 'Type', rTitle: 'Title', rPrice: 'Price', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Included', onQuote: 'On quote', noCover: 'No cover image', untitled: 'Untitled service',
-      accepted: 'Accepted currencies', acceptedHint: 'Currencies customers can pay in (base currency always included)',
+      accepted: 'Also accept payment in', acceptedHint: 'Extra currencies a customer can pay in — the price currency is always included.', baseTag: 'base',
+      priceCurrency: 'Price currency', priceCurrencyHint: 'The currency you enter the price in.',
       stFrench: 'Français', translateBtn: 'Auto-translate from English', translating: 'Translating…',
       frHint: 'French is required. Click translate, then review/edit.',
       contentLanguage: 'Content language', coverageLabel: 'Coverage', translateTo: 'Translate to',
@@ -271,7 +273,8 @@ const DICT: Record<Locale, Dict> = {
       noneAdded: 'Aucun ajouté.', remove: 'Supprimer',
       rType: 'Type', rTitle: 'Titre', rPrice: 'Prix', rOptions: 'Options', rExtras: 'Extras',
       rIncluded: 'Inclus', onQuote: 'Sur devis', noCover: 'Pas de couverture', untitled: 'Service sans titre',
-      accepted: 'Devises acceptées', acceptedHint: 'Devises de paiement (la devise de base est toujours incluse)',
+      accepted: 'Accepter aussi le paiement en', acceptedHint: 'Devises supplémentaires acceptées — la devise du prix est toujours incluse.', baseTag: 'base',
+      priceCurrency: 'Devise du prix', priceCurrencyHint: 'La devise dans laquelle vous saisissez le prix.',
       stFrench: 'Français', translateBtn: "Traduire depuis l'anglais", translating: 'Traduction…',
       frHint: 'Le français est requis. Cliquez sur traduire, puis vérifiez/modifiez.',
       contentLanguage: 'Langue du contenu', coverageLabel: 'Couverture', translateTo: 'Traduire vers',
