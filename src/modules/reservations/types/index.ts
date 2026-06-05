@@ -22,7 +22,7 @@ export interface ReservationItemDetail {
   quantity: number;
   unitPriceCents: number;
   scheduledAt: string | null;
-  extras: { name: string; priceCents: number }[];
+  extras: { name: string; priceCents: number; qty?: number }[];
 }
 
 /** A single booking with everything needed for the detail view. */

@@ -178,10 +178,7 @@ export function ServicePreview({
             {s.options.map((o, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span>{o.name}</span>
-                <span className="text-muted-foreground">
-                  {o.priceDeltaCents >= 0 ? '+' : ''}
-                  {money(o.priceDeltaCents, s.currency)}
-                </span>
+                <span className="text-muted-foreground">{money(o.priceDeltaCents, s.currency)}</span>
               </div>
             ))}
           </div>

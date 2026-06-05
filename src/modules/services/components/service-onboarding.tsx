@@ -716,7 +716,8 @@ function ReviewStep({
     .map((ep, i) => ({ name: (block.extras?.[i]?.name ?? '').trim(), price: num(ep.price) }))
     .filter((x) => x.name);
   const addonsSum = addons.reduce((s, a) => s + a.price, 0);
-  const exampleTotal = baseNum + (variants[0]?.price ?? 0) + addonsSum;
+  // Packages are mutually exclusive + absolute; the example uses the Base package.
+  const exampleTotal = baseNum + addonsSum;
   const fmt = (n: number) => `${n.toLocaleString()} ${cur}`;
   return (
     <div className="space-y-6">
@@ -762,7 +763,7 @@ function ReviewStep({
             {variants.map((it, i) => (
               <div key={`v${i}`} className="flex justify-between gap-4 px-4 py-2 pl-7">
                 <span>{it.name}</span>
-                <span className="font-medium">+ {fmt(it.price)}</span>
+                <span className="font-medium">{fmt(it.price)}</span>
               </div>
             ))}
 

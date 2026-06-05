@@ -29,7 +29,13 @@ export const bookingItemSchema = z.object({
   optionName: z.string().optional(),
   scheduledAt: z.string().datetime().optional(),
   extras: z
-    .array(z.object({ name: z.string(), priceCents: z.coerce.number().int().min(0) }))
+    .array(
+      z.object({
+        name: z.string(),
+        priceCents: z.coerce.number().int().min(0),
+        qty: z.coerce.number().int().min(1).default(1),
+      }),
+    )
     .default([]),
 });
 

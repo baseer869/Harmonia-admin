@@ -146,7 +146,9 @@ export function BookingDetailModal({
                     {it.scheduledAt && <span>{fmtDate(it.scheduledAt)}</span>}
                     {it.extras.map((e) => (
                       <span key={e.name}>
-                        + {e.name} ({money(e.priceCents, data.currency)})
+                        + {e.name}
+                        {(e.qty ?? 1) > 1 ? ` ×${e.qty}` : ''} (
+                        {money(e.priceCents * (e.qty ?? 1), data.currency)})
                       </span>
                     ))}
                   </div>

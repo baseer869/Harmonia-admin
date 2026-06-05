@@ -7,7 +7,7 @@ import type { ServiceTranslations } from '@/modules/services/types';
 import type { Reservation, ReservationDetail, ReservationItemDetail } from '../types';
 import type { BookingItemInput } from '../validation';
 
-type ExtrasJson = { name: string; priceCents: number }[];
+type ExtrasJson = { name: string; priceCents: number; qty?: number }[];
 
 function summarize(items: { title: string }[]): string {
   const first = items[0];
@@ -185,20 +185,26 @@ export const reservationRepository = {
         currency = svc.currency;
         const text = resolveServiceText(svc.translations as ServiceTranslations | null, locale);
 
-        let unit = svc.priceCents;
-        if (svc.priceMode === 'PER_PERSON') {
-          unit = svc.priceCents * Math.max(1, it.people ?? 1);
-        }
+        // Pricing model: the customer buys ONE package. The chosen package's
+        // price is absolute (it replaces the base); the base price IS the
+        // default "Base" package. Package price × people (per-person only).
+        // Add-ons are flat: each priced × its own counter, never × people.
+        let packageCents = svc.priceCents; // Base package
         if (it.optionName) {
-          // The client may send the option name in the customer's language —
+          // The client may send the package name in the customer's language —
           // match against both the base name and the localized name by index.
           const opt = svc.options.find(
             (o, i) => o.name === it.optionName || text.optionName(i, o.name) === it.optionName,
           );
-          if (opt) unit += opt.priceDeltaCents;
+          if (opt) packageCents = opt.priceDeltaCents; // absolute package price
         }
-        const extrasTotal = (it.extras ?? []).reduce((s, e) => s + e.priceCents, 0);
-        const lineUnit = unit + extrasTotal;
+        const packageTotal =
+          svc.priceMode === 'PER_PERSON' ? packageCents * Math.max(1, it.people ?? 1) : packageCents;
+        const addonsTotal = (it.extras ?? []).reduce(
+          (s, e) => s + e.priceCents * Math.max(1, e.qty ?? 1),
+          0,
+        );
+        const lineUnit = packageTotal + addonsTotal;
         subtotal += lineUnit * it.quantity;
 
         const when = it.scheduledAt ? new Date(it.scheduledAt) : null;
