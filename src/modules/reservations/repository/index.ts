@@ -204,8 +204,9 @@ export const reservationRepository = {
           (s, e) => s + e.priceCents * Math.max(1, e.qty ?? 1),
           0,
         );
-        const lineUnit = packageTotal + addonsTotal;
-        subtotal += lineUnit * it.quantity;
+        // The quantity multiplies ONLY the package; add-ons are flat (their own
+        // counters). So: package × quantity + add-ons (added once).
+        subtotal += packageTotal * it.quantity + addonsTotal;
 
         const when = it.scheduledAt ? new Date(it.scheduledAt) : null;
         if (when && !firstScheduledAt) firstScheduledAt = when;
@@ -218,7 +219,9 @@ export const reservationRepository = {
           serviceId: svc.id,
           title,
           quantity: it.quantity,
-          unitPriceCents: lineUnit,
+          // Per-unit = the package part (× people); add-ons are listed separately
+          // in extrasJson and added once to the booking total.
+          unitPriceCents: packageTotal,
           scheduledAt: when,
           extrasJson: (it.extras ?? []) as unknown as Prisma.InputJsonValue,
         });
