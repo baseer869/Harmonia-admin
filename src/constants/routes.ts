@@ -4,6 +4,7 @@ import {
   CalendarCheck2,
   ConciergeBell,
   Home,
+  Inbox,
   LayoutDashboard,
   Settings,
   UserRound,
@@ -23,6 +24,7 @@ export const ROUTES = {
   categories: '/categories',
   reservations: '/reservations',
   customers: '/customers',
+  ownerRequests: '/owner-requests',
   vendors: '/vendors',
   properties: '/properties',
   payments: '/payments',
@@ -86,6 +88,7 @@ export const NAV_ITEMS: ReadonlyArray<NavItem> = [
     ],
   },
   { id: 'reservations', label: 'Bookings', icon: CalendarCheck2, roles: ALL, href: 'reservations' },
+  { id: 'ownerRequests', label: 'Owner Requests', icon: Inbox, roles: ADMINS, href: 'ownerRequests' },
   // Hidden for now (pages kept, just not shown in the sidebar).
   { id: 'vendors', label: 'Vendors', icon: Handshake, roles: SUPER, href: 'vendors', hidden: true },
   { id: 'properties', label: 'Properties', icon: Home, roles: SUPER, href: 'properties', hidden: true },

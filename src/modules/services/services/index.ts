@@ -79,11 +79,21 @@ function toRepoData(d: CreateServiceInput, slug: string) {
   };
 }
 
+/**
+ * Read/by-id scope. Unlike `scopeTenant` (which must return a concrete tenant
+ * for creation), this returns `undefined` for a SUPER_ADMIN so they see/operate
+ * across ALL tenants — a tenant role stays locked to its own tenant.
+ */
+function readScope(actor: Actor, explicit?: string | null): string | undefined {
+  if (actor.role === 'SUPER_ADMIN') return explicit ?? undefined;
+  return resolveTenantContext(actor, explicit ?? actor.tenantId).tenantId;
+}
+
 export const serviceCatalogService = {
   async list(actor: Actor, query: ListServicesQuery): Promise<Paginated<Service>> {
     assertCan(actor, 'read', 'service');
     const { page, pageSize, search, tenantId, locale } = listServicesQuerySchema.parse(query);
-    const scope = await scopeTenant(actor, tenantId);
+    const scope = readScope(actor, tenantId);
     const { items, total } = await serviceRepository.findMany({
       tenantId: scope,
       skip: (page - 1) * pageSize,
@@ -96,8 +106,7 @@ export const serviceCatalogService = {
 
   async get(actor: Actor, id: string, locale?: string): Promise<Service> {
     assertCan(actor, 'read', 'service');
-    const scope = await scopeTenant(actor);
-    const service = await serviceRepository.findById(scope, id, locale);
+    const service = await serviceRepository.findById(readScope(actor), id, locale);
     if (!service) throw ApiError.notFound('Service not found.');
     return service;
   },
@@ -122,7 +131,10 @@ export const serviceCatalogService = {
 
   async update(actor: Actor, id: string, input: UpdateServiceInput): Promise<Service> {
     assertCan(actor, 'update', 'service');
-    const scope = await scopeTenant(actor);
+    // Resolve the service (and its own tenant) within the caller's read scope.
+    const existing = await serviceRepository.findById(readScope(actor), id);
+    if (!existing) throw ApiError.notFound('Service not found.');
+    const scope = existing.tenantId;
     // The edit wizard submits the full shape → full replace.
     const d = createServiceSchema.parse(input);
     const primary = primaryLocaleOf(d.translations as Translations);
@@ -138,8 +150,7 @@ export const serviceCatalogService = {
 
   async remove(actor: Actor, id: string): Promise<void> {
     assertCan(actor, 'delete', 'service');
-    const scope = await scopeTenant(actor);
-    const ok = await serviceRepository.remove(scope, id);
+    const ok = await serviceRepository.remove(readScope(actor), id);
     if (!ok) throw ApiError.notFound('Service not found.');
   },
 };

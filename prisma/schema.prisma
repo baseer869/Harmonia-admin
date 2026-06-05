@@ -626,3 +626,35 @@ model AuditLog {
   @@index([entity, entityId])
   @@map("audit_logs")
 }
+
+/// A prospective service provider's request to list services (from the public
+/// "Contact / list your services" form). A lead — may later be converted into a
+/// real tenant/provider (then `tenantId` is set and status → CONVERTED).
+enum OwnerRequestStatus {
+  NEW
+  REVIEWING
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+model OwnerRequest {
+  id        String             @id @default(cuid())
+  firstName String
+  lastName  String?
+  email     String
+  phone     String?
+  company   String? // business / brand name
+  role      String? // their role (owner, manager, partner…)
+  subject   String? // what kind of services they want to list
+  message   String?
+  status    OwnerRequestStatus @default(NEW)
+  tenantId  String? // set when the lead is converted into a provider
+  locale    String             @default("fr")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("owner_requests")
+}

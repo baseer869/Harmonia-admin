@@ -15,7 +15,8 @@ import { resolveServiceText } from '../locale';
  */
 
 export interface ListServicesArgs {
-  tenantId: string;
+  /** undefined = across all tenants (super admin). */
+  tenantId: string | undefined;
   skip: number;
   take: number;
   search?: string;
@@ -126,7 +127,7 @@ export const serviceRepository = {
     return { items: rows.map((r) => toDomain(r, locale)), total };
   },
 
-  async findById(tenantId: string, id: string, locale?: string) {
+  async findById(tenantId: string | undefined, id: string, locale?: string) {
     const row = await prisma.service.findFirst({
       where: { id, tenantId },
       include: withRelations,
@@ -221,7 +222,7 @@ export const serviceRepository = {
     return this.findById(tenantId, id);
   },
 
-  async remove(tenantId: string, id: string) {
+  async remove(tenantId: string | undefined, id: string) {
     const result = await prisma.service.deleteMany({ where: { id, tenantId } });
     return result.count > 0;
   },

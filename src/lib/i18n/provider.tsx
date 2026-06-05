@@ -12,6 +12,7 @@ export type Locale = 'en' | 'fr';
 interface Dict {
   nav: Record<string, string>;
   subnav: Record<string, string>;
+  ownerReq: Record<string, string>;
   sidebar: { allTenants: string; myWorkspace: string; saas: string; admin: string };
   topbar: { search: string; signOut: string; language: string };
   /** Page titles + descriptions, keyed by page. */
@@ -97,6 +98,7 @@ const DICT: Record<Locale, Dict> = {
       'users-mgmt': 'Users Management',
       services: 'Services',
       reservations: 'Bookings',
+      ownerRequests: 'Owner Requests',
       settings: 'Settings',
     },
     subnav: {
@@ -105,6 +107,23 @@ const DICT: Record<Locale, Dict> = {
       tenants: 'Tenants',
       services: 'Catalog',
       categories: 'Categories',
+    },
+    ownerReq: {
+      listing: 'Provider Requests',
+      business: 'Business',
+      subject: 'Subject',
+      requestedOn: 'Requested on',
+      searchPlaceholder: 'Search name, email, business…',
+      empty: 'No requests yet.',
+      detailTitle: 'Provider request',
+      role: 'Role',
+      message: 'Message',
+      noMessage: 'No message provided.',
+      statusNEW: 'New',
+      statusREVIEWING: 'Reviewing',
+      statusAPPROVED: 'Approved',
+      statusREJECTED: 'Rejected',
+      statusCONVERTED: 'Converted',
     },
     sidebar: { allTenants: 'All Tenants', myWorkspace: 'My Workspace', saas: 'Harmonia SaaS', admin: 'Admin' },
     topbar: { search: 'Search…', signOut: 'Sign out', language: 'Language' },
@@ -116,6 +135,7 @@ const DICT: Record<Locale, Dict> = {
       tenants: { title: 'Tenants', desc: 'Organizations on the platform.' },
       admins: { title: 'Users Management', desc: 'Admin accounts and access.' },
       appUsers: { title: 'Users Management', desc: 'App users (customers).' },
+      ownerRequests: { title: 'Owner Requests', desc: 'Businesses requesting to list their services.' },
       settings: { title: 'Settings', desc: 'Workspace settings.' },
     },
     common: {
@@ -202,6 +222,7 @@ const DICT: Record<Locale, Dict> = {
       'users-mgmt': 'Gestion des utilisateurs',
       services: 'Services',
       reservations: 'Réservations',
+      ownerRequests: 'Demandes prestataires',
       settings: 'Paramètres',
     },
     subnav: {
@@ -210,6 +231,23 @@ const DICT: Record<Locale, Dict> = {
       tenants: 'Locataires',
       services: 'Catalogue',
       categories: 'Catégories',
+    },
+    ownerReq: {
+      listing: 'Demandes de prestataires',
+      business: 'Entreprise',
+      subject: 'Sujet',
+      requestedOn: 'Demandé le',
+      searchPlaceholder: 'Rechercher nom, e-mail, entreprise…',
+      empty: 'Aucune demande pour le moment.',
+      detailTitle: 'Demande de prestataire',
+      role: 'Rôle',
+      message: 'Message',
+      noMessage: 'Aucun message fourni.',
+      statusNEW: 'Nouvelle',
+      statusREVIEWING: 'En examen',
+      statusAPPROVED: 'Approuvée',
+      statusREJECTED: 'Rejetée',
+      statusCONVERTED: 'Convertie',
     },
     sidebar: { allTenants: 'Tous les locataires', myWorkspace: 'Mon espace', saas: 'Harmonia SaaS', admin: 'Admin' },
     topbar: { search: 'Rechercher…', signOut: 'Déconnexion', language: 'Langue' },
@@ -221,6 +259,7 @@ const DICT: Record<Locale, Dict> = {
       tenants: { title: 'Locataires', desc: 'Organisations sur la plateforme.' },
       admins: { title: 'Gestion des utilisateurs', desc: 'Comptes administrateurs et accès.' },
       appUsers: { title: 'Gestion des utilisateurs', desc: 'Utilisateurs de l’application (clients).' },
+      ownerRequests: { title: 'Demandes prestataires', desc: 'Entreprises souhaitant lister leurs services.' },
       settings: { title: 'Paramètres', desc: 'Paramètres de l’espace.' },
     },
     common: {
