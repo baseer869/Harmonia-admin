@@ -156,8 +156,10 @@ function toFormValues(s: Service): Form {
 
 export function ServiceOnboarding({ service }: { service?: Service }) {
   const router = useRouter();
-  const { t } = useAdminI18n();
+  const { t, locale } = useAdminI18n();
   const isEdit = Boolean(service);
+  // The portal's top-level language is the default language the admin writes in.
+  const adminLang: Locale = locale === 'en' ? 'en' : 'fr';
   const wizardSteps: WizardStep[] = [
     { id: 'type', label: t.svcForm.stType },
     { id: 'general', label: t.svcForm.stGeneral },
@@ -173,15 +175,19 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const categories = useCategories();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  // The single language the admin writes in. The other language is generated
-  // automatically on save — the admin never manages translations by hand.
+  // The single language the admin writes in — defaults to the portal language.
+  // The other language is generated automatically on save; the admin never
+  // manages translations by hand. (Editing prefers the portal language when the
+  // service already has content in it, else whichever locale it was authored in.)
   const initialLang: Locale = service
-    ? service.translations?.fr?.title
-      ? 'fr'
-      : service.translations?.en?.title
-        ? 'en'
-        : 'fr'
-    : 'fr';
+    ? service.translations?.[adminLang]?.title
+      ? adminLang
+      : service.translations?.fr?.title
+        ? 'fr'
+        : service.translations?.en?.title
+          ? 'en'
+          : adminLang
+    : adminLang;
   const [lang, setLang] = useState<Locale>(initialLang);
 
   const form = useForm<Form>({
