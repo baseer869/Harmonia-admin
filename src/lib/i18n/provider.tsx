@@ -31,7 +31,7 @@ interface Dict {
     emptyFiltered: string; loading: string; detailCustomer: string; detailItems: string;
     detailNotes: string; detailSchedule: string; detailBookedOn: string; subtotal: string;
     discount: string; approve: string; reject: string; markCompleted: string; cancel: string;
-    updateHint: string;
+    updateHint: string; unit: string;
   };
   services: {
     listing: string; addService: string; title: string; slug: string; price: string;
@@ -133,7 +133,7 @@ const DICT: Record<Locale, Dict> = {
       loading: 'Loading bookings…', detailCustomer: 'Customer', detailItems: 'Items',
       detailNotes: 'Notes', detailSchedule: 'Scheduled', detailBookedOn: 'Booked on',
       subtotal: 'Subtotal', discount: 'Discount', approve: 'Approve', reject: 'Reject',
-      markCompleted: 'Mark completed', cancel: 'Cancel', updateHint: 'Update the booking status',
+      markCompleted: 'Mark completed', cancel: 'Cancel', updateHint: 'Update the booking status', unit: 'Unit',
     },
     services: {
       listing: 'Service Listing', addService: 'Add Service', title: 'Title', slug: 'Slug',
@@ -237,7 +237,7 @@ const DICT: Record<Locale, Dict> = {
       loading: 'Chargement des réservations…', detailCustomer: 'Client', detailItems: 'Articles',
       detailNotes: 'Notes', detailSchedule: 'Prévu le', detailBookedOn: 'Réservé le',
       subtotal: 'Sous-total', discount: 'Remise', approve: 'Approuver', reject: 'Rejeter',
-      markCompleted: 'Marquer terminée', cancel: 'Annuler', updateHint: 'Mettre à jour le statut',
+      markCompleted: 'Marquer terminée', cancel: 'Annuler', updateHint: 'Mettre à jour le statut', unit: 'Unité',
     },
     services: {
       listing: 'Liste des services', addService: 'Ajouter un service', title: 'Titre', slug: 'Slug',

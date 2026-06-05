@@ -142,7 +142,7 @@ export function BookingDetailModal({
                     </span>
                   </div>
                   <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
-                    <span>Unit {money(it.unitPriceCents, data.currency)}</span>
+                    <span>{t.bookings.unit} {money(it.unitPriceCents, data.currency)}</span>
                     {it.scheduledAt && <span>{fmtDate(it.scheduledAt)}</span>}
                     {it.extras.map((e) => (
                       <span key={e.name}>
