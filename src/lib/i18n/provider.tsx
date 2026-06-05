@@ -55,7 +55,7 @@ interface Dict {
     currency: string; priceUnit: string; maxPeople: string; duration: string;
     languages: string; visible: string; requiresDate: string;
     hintType: string; optional: string; commaSep: string; hintUnit: string;
-    selectTenant: string; none: string;
+    selectTenant: string; none: string; selectCategory: string;
     tExperience: string; tTransfer: string; tProduct: string; tQuote: string;
     mPerPerson: string; mPerTrip: string; mFixed: string; mOnQuote: string;
     yes: string; no: string; photoNote: string;
@@ -157,7 +157,7 @@ const DICT: Record<Locale, Dict> = {
       currency: 'Currency', priceUnit: 'Price unit', maxPeople: 'Max people', duration: 'Duration (minutes)',
       languages: 'Languages', visible: 'Visible in catalog', requiresDate: 'Requires a date',
       hintType: 'Drives the booking form', optional: 'Optional', commaSep: 'Comma-separated', hintUnit: 'e.g. "/ pers.", "/ trip"',
-      selectTenant: 'Select a tenant…', none: '— None —',
+      selectTenant: 'Select a tenant…', none: '— None —', selectCategory: 'Select a category…',
       tExperience: 'Experience (date · people)', tTransfer: 'Transfer (per trip)', tProduct: 'Product (quantity)', tQuote: 'On quote (enquiry)',
       mPerPerson: 'Per person', mPerTrip: 'Per trip', mFixed: 'Fixed', mOnQuote: 'On quote',
       yes: 'Yes', no: 'No', photoNote: 'One photo is enough — it’s used as both the cover and the thumbnail.',
@@ -260,7 +260,7 @@ const DICT: Record<Locale, Dict> = {
       currency: 'Devise', priceUnit: 'Unité de prix', maxPeople: 'Personnes max', duration: 'Durée (minutes)',
       languages: 'Langues', visible: 'Visible au catalogue', requiresDate: 'Date requise',
       hintType: 'Détermine le formulaire de réservation', optional: 'Facultatif', commaSep: 'Séparés par des virgules', hintUnit: 'ex. « / pers. », « / trajet »',
-      selectTenant: 'Choisir un locataire…', none: '— Aucune —',
+      selectTenant: 'Choisir un locataire…', none: '— Aucune —', selectCategory: 'Choisir une catégorie…',
       tExperience: 'Expérience (date · personnes)', tTransfer: 'Transfert (par trajet)', tProduct: 'Produit (quantité)', tQuote: 'Sur devis (demande)',
       mPerPerson: 'Par personne', mPerTrip: 'Par trajet', mFixed: 'Fixe', mOnQuote: 'Sur devis',
       yes: 'Oui', no: 'Non', photoNote: 'Une seule photo suffit — utilisée comme couverture et miniature.',

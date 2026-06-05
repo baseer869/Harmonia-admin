@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Languages, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Languages, Plus, Trash2 } from 'lucide-react';
 
 import { Button, Input, Switch } from '@/components/ui';
 import {
@@ -24,7 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { http } from '@/lib/api';
 import { useTenants } from '@/modules/tenants';
-import { useCategories } from '@/modules/categories';
+import { useCategories, type Category } from '@/modules/categories';
 import { useAdminI18n } from '@/lib/i18n/provider';
 import { useCreateService, useUpdateService } from '../hooks';
 import type { Service, ServiceLocaleFields } from '../types';
@@ -445,48 +445,11 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
             </FieldSelect>
           </Field>
           <Field label={t.svcForm.category} hint={t.svcForm.optional} className="md:col-span-3">
-            {(() => {
-              const cats = categories.data?.items ?? [];
-              const parents = cats.filter((c) => !c.parentId);
-              const selected = watch('categoryId');
-              const row = (id: string, label: string, indent: boolean) => (
-                <button
-                  key={id || 'none'}
-                  type="button"
-                  onClick={() => setValue('categoryId', id)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] transition-colors',
-                    indent && 'pl-8',
-                    selected === id
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'hover:bg-accent',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'grid size-4 shrink-0 place-items-center rounded-full border',
-                      selected === id ? 'border-primary bg-primary' : 'border-muted-foreground/40',
-                    )}
-                  >
-                    {selected === id && <span className="size-1.5 rounded-full bg-white" />}
-                  </span>
-                  {label}
-                </button>
-              );
-              return (
-                <div className="max-h-60 space-y-0.5 overflow-y-auto rounded-lg border p-2">
-                  {row('', t.svcForm.none, false)}
-                  {parents.map((p) => (
-                    <div key={p.id}>
-                      {row(p.id, p.name, false)}
-                      {cats
-                        .filter((c) => c.parentId === p.id)
-                        .map((c) => row(c.id, c.name, true))}
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+            <CategoryPicker
+              categories={categories.data?.items ?? []}
+              value={watch('categoryId') ?? ''}
+              onChange={(id) => setValue('categoryId', id)}
+            />
           </Field>
         </div>
       )}
@@ -794,6 +757,147 @@ function ReviewStep({
         ))}
       </div>
       {rootError ? <p className="text-destructive text-sm">{rootError}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Single-select category picker. Collapsed by default: clicking opens a dropdown
+ * of parent categories; a parent with children can be expanded to reveal its
+ * sub-categories. Scales as the catalog grows (parents stay collapsed). A parent
+ * itself is selectable, or any one sub-category.
+ */
+function CategoryPicker({
+  categories,
+  value,
+  onChange,
+}: {
+  categories: Category[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const { t } = useAdminI18n();
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const parents = categories.filter((c) => !c.parentId);
+  const childrenOf = (id: string) => categories.filter((c) => c.parentId === id);
+  const selected = categories.find((c) => c.id === value) ?? null;
+  const triggerLabel = selected
+    ? selected.parentName
+      ? `${selected.parentName} › ${selected.name}`
+      : selected.name
+    : t.svcForm.selectCategory;
+
+  const openMenu = () => {
+    const next = !open;
+    setOpen(next);
+    // Reveal the selected child's parent branch when opening.
+    if (next && selected?.parentId) {
+      setExpanded((prev) => new Set(prev).add(selected.parentId!));
+    }
+  };
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const pick = (id: string) => {
+    onChange(id);
+    setOpen(false);
+  };
+
+  const radio = (active: boolean) => (
+    <span
+      className={cn(
+        'grid size-4 shrink-0 place-items-center rounded-full border',
+        active ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+      )}
+    >
+      {active && <span className="size-1.5 rounded-full bg-white" />}
+    </span>
+  );
+  const rowCls = (active: boolean) =>
+    cn(
+      'flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] transition-colors',
+      active ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-accent',
+    );
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={openMenu}
+        className="border-input bg-background flex h-10 w-full items-center justify-between gap-2 rounded-md border px-3 text-[15px]"
+      >
+        <span className={cn('truncate', !selected && 'text-muted-foreground')}>{triggerLabel}</span>
+        <ChevronDown className={cn('size-4 shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="bg-popover absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border p-1 shadow-md">
+          <button type="button" onClick={() => pick('')} className={cn(rowCls(!value), 'w-full')}>
+            {radio(!value)}
+            {t.svcForm.none}
+          </button>
+          {parents.map((p) => {
+            const kids = childrenOf(p.id);
+            const isExp = expanded.has(p.id);
+            return (
+              <div key={p.id}>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => pick(p.id)}
+                    className={cn(rowCls(value === p.id), 'flex-1')}
+                  >
+                    {radio(value === p.id)}
+                    {p.name}
+                  </button>
+                  {kids.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => toggle(p.id)}
+                      aria-label={p.name}
+                      className="hover:bg-accent grid size-7 shrink-0 place-items-center rounded-md"
+                    >
+                      <ChevronRight className={cn('size-4 transition-transform', isExp && 'rotate-90')} />
+                    </button>
+                  ) : null}
+                </div>
+                {isExp
+                  ? kids.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => pick(c.id)}
+                        className={cn(rowCls(value === c.id), 'w-full pl-8')}
+                      >
+                        {radio(value === c.id)}
+                        {c.name}
+                      </button>
+                    ))
+                  : null}
+              </div>
+            );
+          })}
+          {parents.length === 0 ? (
+            <p className="text-muted-foreground px-3 py-2 text-sm">{t.svcForm.none}</p>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
