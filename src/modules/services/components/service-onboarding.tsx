@@ -420,7 +420,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       submitLabel={isEdit ? t.common.save : t.svcForm.create}
     >
       {step === 0 && (
-        <div className="grid gap-x-8 gap-y-6 md:grid-cols-3">
+        <div className="grid max-w-4xl gap-x-6 gap-y-6 md:grid-cols-3">
           <Field label={t.svcForm.tenant} required error={errors.tenantId?.message}>
             <FieldSelect {...register('tenantId')} disabled={isEdit}>
               <option value="">{t.svcForm.selectTenant}</option>
@@ -444,7 +444,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
               <option value="QUOTE">{t.svcForm.tQuote}</option>
             </FieldSelect>
           </Field>
-          <Field label={t.svcForm.category} hint={t.svcForm.optional} className="md:col-span-3">
+          <Field label={t.svcForm.category} hint={t.svcForm.optional}>
             <CategoryPicker
               categories={categories.data?.items ?? []}
               value={watch('categoryId') ?? ''}
