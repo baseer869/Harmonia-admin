@@ -18,6 +18,7 @@ function qs(query?: Partial<ListUsersQuery>): string {
   if (!query) return '';
   const p = new URLSearchParams();
   if (query.page) p.set('page', String(query.page));
+  if (query.pageSize) p.set('pageSize', String(query.pageSize));
   if (query.search) p.set('search', query.search);
   if (query.tenantId) p.set('tenantId', query.tenantId);
   const s = p.toString();

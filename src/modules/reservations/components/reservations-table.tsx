@@ -5,7 +5,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
 import { StatusBadge } from '@/components/ui';
-import { DataTable } from '@/components/tables';
+import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { fromMinorUnits } from '@/constants';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
@@ -112,7 +112,12 @@ export function ReservationsTable({
   const [page, setPage] = useState(1);
   // Reset to the first page whenever the filters change.
   useEffect(() => setPage(1), [status, search]);
-  const { data, isLoading, isError, error } = useReservations({ status, search, page });
+  const { data, isLoading, isError, error } = useReservations({
+    status,
+    search,
+    page,
+    pageSize: TABLE_PAGE_SIZE,
+  });
   const [viewId, setViewId] = useState<string | null>(null);
 
   return (

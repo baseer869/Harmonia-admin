@@ -5,7 +5,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, Pencil } from 'lucide-react';
 
 import { Switch } from '@/components/ui';
-import { DataTable } from '@/components/tables';
+import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useUpdateUser, useUsers } from '../hooks';
@@ -77,7 +77,7 @@ function buildColumns(t: Dict): ColumnDef<AdminUser>[] {
 export function UsersTable() {
   const { t } = useAdminI18n();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useUsers({ page });
+  const { data, isLoading, isError, error } = useUsers({ page, pageSize: TABLE_PAGE_SIZE });
   if (isLoading)
     return <p className="text-muted-foreground p-4 text-sm">{t.lists.loadingUsers}</p>;
   if (isError)

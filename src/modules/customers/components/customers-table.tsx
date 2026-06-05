@@ -5,7 +5,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
 import { Switch } from '@/components/ui';
-import { DataTable } from '@/components/tables';
+import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useCustomers, useSetCustomerStatus } from '../hooks';
@@ -60,7 +60,7 @@ function buildColumns(t: Dict): ColumnDef<Customer>[] {
 export function CustomersTable() {
   const { t } = useAdminI18n();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useCustomers({ page });
+  const { data, isLoading, isError, error } = useCustomers({ page, pageSize: TABLE_PAGE_SIZE });
   if (isLoading)
     return <p className="text-muted-foreground p-4 text-sm">{t.common.loading}</p>;
   if (isError)

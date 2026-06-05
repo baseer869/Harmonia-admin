@@ -4,6 +4,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useAdminI18n } from '@/lib/i18n/provider';
 
+/** Default rows per page for every admin list table (one place to change it). */
+export const TABLE_PAGE_SIZE = 10;
+
 /** Server-side pagination state shared by every list table. */
 export interface PaginationState {
   page: number;

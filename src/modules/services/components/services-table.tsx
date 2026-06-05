@@ -8,7 +8,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/ui';
-import { DataTable } from '@/components/tables';
+import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { fromMinorUnits } from '@/constants';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
@@ -86,7 +86,7 @@ function buildColumns(onPreview: (s: Service) => void, t: Dict): ColumnDef<Servi
 export function ServicesTable() {
   const { t } = useAdminI18n();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useServices({ page });
+  const { data, isLoading, isError, error } = useServices({ page, pageSize: TABLE_PAGE_SIZE });
   const [preview, setPreview] = useState<Service | null>(null);
 
   if (isLoading) {

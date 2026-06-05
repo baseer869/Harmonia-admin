@@ -6,7 +6,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
 import { StatusBadge } from '@/components/ui';
-import { DataTable } from '@/components/tables';
+import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
 import { useTenants } from '../hooks';
@@ -61,7 +61,7 @@ function buildColumns(t: Dict): ColumnDef<Tenant>[] {
 export function TenantsTable() {
   const { t } = useAdminI18n();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useTenants({ page });
+  const { data, isLoading, isError, error } = useTenants({ page, pageSize: TABLE_PAGE_SIZE });
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t.lists.loadingTenants}</p>;
