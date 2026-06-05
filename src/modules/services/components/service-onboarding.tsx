@@ -938,36 +938,45 @@ function CategoryPicker({
           </button>
           {parents.map((p) => {
             const kids = childrenOf(p.id);
+            const hasKids = kids.length > 0;
             const isExp = expanded.has(p.id);
             return (
               <div key={p.id}>
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => pick(p.id)}
-                    className={cn(rowCls(value === p.id), 'flex-1')}
+                <div className={rowCls(value === p.id)}>
+                  {/* The radio selects the parent itself. */}
+                  <span
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={p.name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pick(p.id);
+                    }}
+                    className="cursor-pointer"
                   >
                     {radio(value === p.id)}
-                    {p.name}
+                  </span>
+                  {/* Click the name to expand sub-categories (or select if none). */}
+                  <button
+                    type="button"
+                    onClick={() => (hasKids ? toggle(p.id) : pick(p.id))}
+                    className="flex flex-1 items-center gap-2 text-left font-medium"
+                  >
+                    <span className="flex-1">{p.name}</span>
+                    {hasKids ? (
+                      <ChevronRight
+                        className={cn('text-muted-foreground size-4 transition-transform', isExp && 'rotate-90')}
+                      />
+                    ) : null}
                   </button>
-                  {kids.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => toggle(p.id)}
-                      aria-label={p.name}
-                      className="hover:bg-accent grid size-7 shrink-0 place-items-center rounded-md"
-                    >
-                      <ChevronRight className={cn('size-4 transition-transform', isExp && 'rotate-90')} />
-                    </button>
-                  ) : null}
                 </div>
-                {isExp
+                {hasKids && isExp
                   ? kids.map((c) => (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => pick(c.id)}
-                        className={cn(rowCls(value === c.id), 'w-full pl-8')}
+                        className={cn(rowCls(value === c.id), 'w-full pl-9')}
                       >
                         {radio(value === c.id)}
                         {c.name}
