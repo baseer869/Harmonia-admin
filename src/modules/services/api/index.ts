@@ -17,8 +17,8 @@ export const serviceApi = {
   list(actor: Actor, query: ListServicesQuery): Promise<Paginated<Service>> {
     return serviceCatalogService.list(actor, query);
   },
-  get(actor: Actor, id: string): Promise<Service> {
-    return serviceCatalogService.get(actor, id);
+  get(actor: Actor, id: string, locale?: string): Promise<Service> {
+    return serviceCatalogService.get(actor, id, locale);
   },
   create(
     actor: Actor,

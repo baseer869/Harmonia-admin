@@ -6,12 +6,13 @@ import { ApiError, fail, ok } from '@/lib/api';
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function GET(_request: NextRequest, { params }: Context) {
+export async function GET(request: NextRequest, { params }: Context) {
   try {
     const actor = await getCurrentActor();
     if (!actor) throw ApiError.forbidden('Authentication required.');
     const { id } = await params;
-    return ok(await serviceApi.get(actor, id));
+    const locale = request.nextUrl.searchParams.get('locale') ?? undefined;
+    return ok(await serviceApi.get(actor, id, locale));
   } catch (error) {
     return fail(error);
   }

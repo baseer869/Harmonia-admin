@@ -82,21 +82,22 @@ function toRepoData(d: CreateServiceInput, slug: string) {
 export const serviceCatalogService = {
   async list(actor: Actor, query: ListServicesQuery): Promise<Paginated<Service>> {
     assertCan(actor, 'read', 'service');
-    const { page, pageSize, search, tenantId } = listServicesQuerySchema.parse(query);
+    const { page, pageSize, search, tenantId, locale } = listServicesQuerySchema.parse(query);
     const scope = await scopeTenant(actor, tenantId);
     const { items, total } = await serviceRepository.findMany({
       tenantId: scope,
       skip: (page - 1) * pageSize,
       take: pageSize,
       search,
+      locale,
     });
     return { items, total, page, pageSize };
   },
 
-  async get(actor: Actor, id: string): Promise<Service> {
+  async get(actor: Actor, id: string, locale?: string): Promise<Service> {
     assertCan(actor, 'read', 'service');
     const scope = await scopeTenant(actor);
-    const service = await serviceRepository.findById(scope, id);
+    const service = await serviceRepository.findById(scope, id, locale);
     if (!service) throw ApiError.notFound('Service not found.');
     return service;
   },

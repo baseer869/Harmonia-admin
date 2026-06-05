@@ -95,6 +95,8 @@ export const listServicesQuerySchema = z.object({
   search: z.string().trim().optional(),
   /** Super Admin only: which tenant's catalog to act on. */
   tenantId: z.string().optional(),
+  /** Language to resolve display text in (defaults to the admin portal language). */
+  locale: z.string().max(5).optional(),
 });
 
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;

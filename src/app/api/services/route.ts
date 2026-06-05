@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
       pageSize: Number(sp.get('pageSize') ?? 20),
       search: sp.get('search') ?? undefined,
       tenantId: sp.get('tenantId') ?? undefined,
+      locale: sp.get('locale') ?? undefined,
     });
     return ok(result);
   } catch (error) {

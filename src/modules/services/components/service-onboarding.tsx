@@ -175,20 +175,10 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const categories = useCategories();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  // The single language the admin writes in — defaults to the portal language.
-  // The other language is generated automatically on save; the admin never
-  // manages translations by hand. (Editing prefers the portal language when the
-  // service already has content in it, else whichever locale it was authored in.)
-  const initialLang: Locale = service
-    ? service.translations?.[adminLang]?.title
-      ? adminLang
-      : service.translations?.fr?.title
-        ? 'fr'
-        : service.translations?.en?.title
-          ? 'en'
-          : adminLang
-    : adminLang;
-  const [lang, setLang] = useState<Locale>(initialLang);
+  // The admin writes in the portal's top-level language. Flipping the global
+  // EN/FR toggle switches the content shown here too — there is no separate
+  // per-service language menu. The other language is generated on save.
+  const lang: Locale = adminLang;
 
   const form = useForm<Form>({
     resolver: zodResolver(schema),
@@ -399,22 +389,17 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const cover = watch('coverUrl');
   const thumb = watch('thumbUrl');
 
-  // Shown on every text-bearing step: pick the language you write in. The other
-  // language is generated automatically on save — no tabs, no second form.
+  // Read-only indicator: the content language follows the portal language (the
+  // top-level EN/FR switch). The other language is generated on save.
   const langBar = (
-    <div className="mb-6 flex flex-wrap items-center gap-3">
-      <span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-        <Languages className="size-4" /> {t.svcForm.contentLanguage}
+    <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-muted-foreground inline-flex items-center gap-1.5">
+        <Languages className="size-4" /> {t.svcForm.contentLanguage}:
       </span>
-      <select
-        value={lang}
-        onChange={(e) => setLang(e.target.value as Locale)}
-        className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-      >
-        <option value="fr">{t.svcForm.langFr}</option>
-        <option value="en">{t.svcForm.langEn}</option>
-      </select>
-      <span className="text-muted-foreground text-xs">{t.svcForm.autoTranslateHint}</span>
+      <span className="bg-primary/10 text-primary rounded-md px-2 py-0.5 font-medium">
+        {langLabel(lang)}
+      </span>
+      <span className="text-muted-foreground text-xs">· {t.svcForm.autoTranslateHint}</span>
     </div>
   );
 
