@@ -36,9 +36,7 @@ type Locale = (typeof LOCALES)[number];
 /** Per-locale text block (everything customer-facing is translated). */
 const blockSchema = z.object({
   title: z.string(),
-  subtitle: z.string(),
   description: z.string(),
-  priceUnit: z.string(),
   tagsText: z.string(),
   options: z.array(z.object({ name: z.string() })),
   extras: z.array(z.object({ name: z.string() })),
@@ -49,9 +47,7 @@ type Block = z.infer<typeof blockSchema>;
 
 const emptyBlock = (): Block => ({
   title: '',
-  subtitle: '',
   description: '',
-  priceUnit: '',
   tagsText: '',
   options: [],
   extras: [],
@@ -114,9 +110,7 @@ function blockFrom(
 ): Block {
   return {
     title: fields?.title ?? '',
-    subtitle: fields?.subtitle ?? '',
     description: fields?.description ?? '',
-    priceUnit: fields?.priceUnit ?? '',
     tagsText: (fields?.tags ?? []).join(', '),
     options: baseOptions.map((o, i) => ({ name: fields?.options?.[i]?.name ?? o.name })),
     extras: baseExtras.map((e, i) => ({ name: fields?.extras?.[i]?.name ?? e.name })),
@@ -254,9 +248,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
   const translateBlock = async (src: Block, to: Locale): Promise<Block> => {
     const out: Block = {
       title: '',
-      subtitle: '',
       description: '',
-      priceUnit: '',
       tagsText: '',
       options: src.options.map(() => ({ name: '' })),
       extras: src.extras.map(() => ({ name: '' })),
@@ -272,9 +264,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
       }
     };
     q(src.title, (s) => { out.title = s; });
-    q(src.subtitle, (s) => { out.subtitle = s; });
     q(src.description, (s) => { out.description = s; });
-    q(src.priceUnit, (s) => { out.priceUnit = s; });
     q(src.tagsText, (s) => { out.tagsText = s; });
     src.options.forEach((o, i) => { const r = out.options[i]!; q(o.name, (s) => { r.name = s; }); });
     src.extras.forEach((e, i) => { const r = out.extras[i]!; q(e.name, (s) => { r.name = s; }); });
@@ -303,9 +293,7 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
 
   const buildBlock = (b: Block, optIdx: number[], extIdx: number[]): ServiceLocaleFields => ({
     title: b.title.trim(),
-    subtitle: b.subtitle.trim() || undefined,
     description: b.description.trim() || undefined,
-    priceUnit: b.priceUnit.trim() || undefined,
     tags: csv(b.tagsText),
     options: optIdx.map((i) => ({ name: (b.options?.[i]?.name ?? '').trim() })),
     extras: extIdx.map((i) => ({ name: (b.extras?.[i]?.name ?? '').trim() })),
@@ -458,11 +446,13 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
         <div>
           {langBar}
           <div key={lang} className="grid gap-x-8 gap-y-6 md:grid-cols-2">
-            <Field label={`${t.svcForm.title} (${langLabel(lang)})`} required error={langErr('title')}>
+            <Field
+              label={`${t.svcForm.title} (${langLabel(lang)})`}
+              className="md:col-span-2"
+              required
+              error={langErr('title')}
+            >
               <Input placeholder="Agafay Desert Excursion" {...register(`${lang}.title`)} />
-            </Field>
-            <Field label={`${t.svcForm.subtitle} (${langLabel(lang)})`}>
-              <Input placeholder="Sunset, dunes & a Berber dinner" {...register(`${lang}.subtitle`)} />
             </Field>
             <Field
               label={`${t.svcForm.description} (${langLabel(lang)})`}
@@ -527,9 +517,6 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
                 />
               </Field>
             )}
-            <Field label={`${t.svcForm.priceUnit} (${langLabel(lang)})`} hint={t.svcForm.hintUnit}>
-              <Input key={lang} {...register(`${lang}.priceUnit`)} />
-            </Field>
             {!isProduct && (
               <Field label={t.svcForm.maxPeople}>
                 <Input type="number" min={1} {...register('maxPeople')} />
@@ -565,32 +552,38 @@ export function ServiceOnboarding({ service }: { service?: Service }) {
         <div>
           {langBar}
           <div key={lang} className="space-y-8">
-            <Repeater
-              title={t.svcForm.optionsTitle}
-              addLabel={t.svcForm.addOption}
-              onAdd={addOption}
-              rows={optionsFA.fields}
-              onRemove={removeOption}
-              render={(i) => (
-                <>
-                  <Input placeholder={`${t.svcForm.optionName} (${langLabel(lang)})`} {...register(`${lang}.options.${i}.name`)} />
-                  <Input type="number" step="0.01" placeholder={t.svcForm.priceDelta} {...register(`optionPrices.${i}.priceDelta`)} />
-                </>
-              )}
-            />
-            <Repeater
-              title={t.svcForm.extrasTitle}
-              addLabel={t.svcForm.addExtra}
-              onAdd={addExtra}
-              rows={extrasFA.fields}
-              onRemove={removeExtra}
-              render={(i) => (
-                <>
-                  <Input placeholder={`${t.svcForm.extraName} (${langLabel(lang)})`} {...register(`${lang}.extras.${i}.name`)} />
-                  <Input type="number" step="0.01" placeholder={t.svcForm.priceCol} {...register(`extraPrices.${i}.price`)} />
-                </>
-              )}
-            />
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">{t.svcForm.optionsHint}</p>
+              <Repeater
+                title={t.svcForm.optionsTitle}
+                addLabel={t.svcForm.addOption}
+                onAdd={addOption}
+                rows={optionsFA.fields}
+                onRemove={removeOption}
+                render={(i) => (
+                  <>
+                    <Input placeholder={`${t.svcForm.optionName} (${langLabel(lang)})`} {...register(`${lang}.options.${i}.name`)} />
+                    <Input type="number" step="0.01" placeholder={t.svcForm.priceDelta} {...register(`optionPrices.${i}.priceDelta`)} />
+                  </>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">{t.svcForm.extrasHint}</p>
+              <Repeater
+                title={t.svcForm.extrasTitle}
+                addLabel={t.svcForm.addExtra}
+                onAdd={addExtra}
+                rows={extrasFA.fields}
+                onRemove={removeExtra}
+                render={(i) => (
+                  <>
+                    <Input placeholder={`${t.svcForm.extraName} (${langLabel(lang)})`} {...register(`${lang}.extras.${i}.name`)} />
+                    <Input type="number" step="0.01" placeholder={t.svcForm.priceCol} {...register(`extraPrices.${i}.price`)} />
+                  </>
+                )}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -694,10 +687,20 @@ function ReviewStep({
   const { t } = useAdminI18n();
   const block = blockComplete(v[lang]) ? v[lang] : blockComplete(v.fr) ? v.fr : v.en;
   const langName = lang === 'fr' ? t.svcForm.langFr : t.svcForm.langEn;
+  const modeLabel: Record<Form['priceMode'], string> = {
+    PER_PERSON: t.svcForm.mPerPerson,
+    PER_TRIP: t.svcForm.mPerTrip,
+    FIXED: t.svcForm.mFixed,
+    ON_QUOTE: t.svcForm.mOnQuote,
+  };
+  const priceText =
+    v.type === 'QUOTE'
+      ? t.svcForm.onQuote
+      : `${v.price || 0} ${v.currency} · ${modeLabel[v.priceMode]}`;
   const rows: [string, string][] = [
     [t.svcForm.rType, v.type],
     [t.svcForm.rTitle, block.title],
-    [t.svcForm.rPrice, v.type === 'QUOTE' ? t.svcForm.onQuote : `${v.price} ${v.currency} ${block.priceUnit ?? ''}`],
+    [t.svcForm.rPrice, priceText],
     [t.svcForm.contentLanguage, langName],
     [t.svcForm.rOptions, String(v.optionPrices.length)],
     [t.svcForm.rExtras, String(v.extraPrices.length)],
@@ -717,7 +720,7 @@ function ReviewStep({
         </div>
         <div className="px-6 py-5">
           <h3 className="text-xl font-semibold">{block.title || t.svcForm.untitled}</h3>
-          <p className="text-muted-foreground text-sm">{block.subtitle || block.description || '—'}</p>
+          <p className="text-muted-foreground text-sm">{block.description || '—'}</p>
         </div>
       </div>
       <div className="divide-y rounded-lg border">

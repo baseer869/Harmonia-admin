@@ -63,6 +63,7 @@ interface Dict {
     yes: string; no: string; photoNote: string;
     optionsTitle: string; addOption: string; optionName: string; priceDelta: string;
     extrasTitle: string; addExtra: string; extraName: string; priceCol: string;
+    optionsHint: string; extrasHint: string;
     includedTitle: string; addItem: string; itemTitle: string; itemDesc: string;
     practicalTitle: string; addInfo: string; infoLabel: string; infoValue: string;
     noneAdded: string; remove: string;
@@ -184,8 +185,10 @@ const DICT: Record<Locale, Dict> = {
       tExperience: 'Experience (date · people)', tTransfer: 'Transfer (per trip)', tProduct: 'Product (quantity)', tQuote: 'On quote (enquiry)',
       mPerPerson: 'Per person', mPerTrip: 'Per trip', mFixed: 'Fixed', mOnQuote: 'On quote',
       yes: 'Yes', no: 'No', photoNote: 'One photo is enough — it’s used as both the cover and the thumbnail.',
-      optionsTitle: 'Options / formulas', addOption: 'Add option', optionName: 'Option name', priceDelta: 'Price delta',
-      extrasTitle: 'Extras / add-ons', addExtra: 'Add extra', extraName: 'Extra name', priceCol: 'Price',
+      optionsTitle: 'Options', addOption: 'Add option', optionName: 'e.g. Standard, Premium', priceDelta: 'Extra price (+/–)',
+      extrasTitle: 'Add-ons', addExtra: 'Add add-on', extraName: 'e.g. Private guide, Extra night', priceCol: 'Price',
+      optionsHint: 'Optional variants of this service at different prices (e.g. Standard, Premium). Leave empty if not needed.',
+      extrasHint: 'Optional paid add-ons a customer can include. Leave empty if not needed.',
       includedTitle: "What's included", addItem: 'Add item', itemTitle: 'Title', itemDesc: 'Description',
       practicalTitle: 'Practical info', addInfo: 'Add info', infoLabel: 'Label (e.g. Duration)', infoValue: 'Value',
       noneAdded: 'None added.', remove: 'Remove',
@@ -308,8 +311,10 @@ const DICT: Record<Locale, Dict> = {
       tExperience: 'Expérience (date · personnes)', tTransfer: 'Transfert (par trajet)', tProduct: 'Produit (quantité)', tQuote: 'Sur devis (demande)',
       mPerPerson: 'Par personne', mPerTrip: 'Par trajet', mFixed: 'Fixe', mOnQuote: 'Sur devis',
       yes: 'Oui', no: 'Non', photoNote: 'Une seule photo suffit — utilisée comme couverture et miniature.',
-      optionsTitle: 'Options / formules', addOption: 'Ajouter une option', optionName: "Nom de l'option", priceDelta: 'Écart de prix',
-      extrasTitle: 'Extras / suppléments', addExtra: 'Ajouter un extra', extraName: "Nom de l'extra", priceCol: 'Prix',
+      optionsTitle: 'Options', addOption: 'Ajouter une option', optionName: 'ex. Standard, Premium', priceDelta: 'Prix en plus (+/–)',
+      extrasTitle: 'Suppléments', addExtra: 'Ajouter un supplément', extraName: 'ex. Guide privé, Nuit supplémentaire', priceCol: 'Prix',
+      optionsHint: 'Variantes facultatives de ce service à différents prix (ex. Standard, Premium). Laissez vide si inutile.',
+      extrasHint: 'Suppléments payants facultatifs que le client peut ajouter. Laissez vide si inutile.',
       includedTitle: 'Ce qui est inclus', addItem: 'Ajouter un élément', itemTitle: 'Titre', itemDesc: 'Description',
       practicalTitle: 'Infos pratiques', addInfo: 'Ajouter une info', infoLabel: 'Libellé (ex. Durée)', infoValue: 'Valeur',
       noneAdded: 'Aucun ajouté.', remove: 'Supprimer',

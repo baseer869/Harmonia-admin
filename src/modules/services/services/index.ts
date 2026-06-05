@@ -156,20 +156,20 @@ export const serviceCatalogService = {
 };
 
 /**
- * Public catalog read (no auth). Tenant resolved by slug (sent by the client
- * website); only ACTIVE services of an ACTIVE tenant are exposed.
+ * Public catalog read (no auth). The client website is a marketplace: it lists
+ * ACTIVE services from ALL active tenants (the `tenantSlug` header is accepted
+ * but not used to scope the catalogue). Bookings still resolve to the service's
+ * own tenant.
  */
 export const publicServiceCatalog = {
   async list(
-    tenantSlug: string,
+    _tenantSlug: string | null,
     query: ListServicesQuery,
     locale?: string,
   ): Promise<Paginated<Service>> {
-    const tenantId = await serviceRepository.tenantIdBySlug(tenantSlug);
-    if (!tenantId) throw ApiError.notFound('Unknown tenant.');
     const { page, pageSize, search } = listServicesQuerySchema.parse(query);
     const { items, total } = await serviceRepository.findManyActive({
-      tenantId,
+      tenantId: undefined,
       skip: (page - 1) * pageSize,
       take: pageSize,
       search,
@@ -178,10 +178,8 @@ export const publicServiceCatalog = {
     return { items, total, page, pageSize };
   },
 
-  async getBySlug(tenantSlug: string, serviceSlug: string, locale?: string): Promise<Service> {
-    const tenantId = await serviceRepository.tenantIdBySlug(tenantSlug);
-    if (!tenantId) throw ApiError.notFound('Unknown tenant.');
-    const svc = await serviceRepository.findActiveBySlug(tenantId, serviceSlug, locale);
+  async getBySlug(_tenantSlug: string | null, serviceSlug: string, locale?: string): Promise<Service> {
+    const svc = await serviceRepository.findActiveBySlug(undefined, serviceSlug, locale);
     if (!svc) throw ApiError.notFound('Service not found.');
     return svc;
   },

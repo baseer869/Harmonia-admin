@@ -143,15 +143,19 @@ export const serviceRepository = {
     return row ? toDomain(row, locale) : null;
   },
 
-  /** Public catalog: active services only. */
+  /** Public catalog: active services only. `tenantId` undefined = all active tenants. */
   async findManyActive(args: {
-    tenantId: string;
+    tenantId?: string;
     skip: number;
     take: number;
     search?: string;
     locale?: string;
   }) {
-    const where = { tenantId: args.tenantId, active: true, ...searchWhere(args.search) };
+    const where: Prisma.ServiceWhereInput = {
+      active: true,
+      ...(args.tenantId ? { tenantId: args.tenantId } : { tenant: { status: 'ACTIVE' } }),
+      ...searchWhere(args.search),
+    };
     const [rows, total] = await Promise.all([
       prisma.service.findMany({
         where,
@@ -164,10 +168,14 @@ export const serviceRepository = {
     return { items: rows.map((r) => toDomain(r, args.locale)), total };
   },
 
-  /** Public detail: a single active service (with options/extras/media). */
-  async findActiveBySlug(tenantId: string, slug: string, locale?: string) {
+  /** Public detail: a single active service. `tenantId` undefined = any active tenant. */
+  async findActiveBySlug(tenantId: string | undefined, slug: string, locale?: string) {
     const row = await prisma.service.findFirst({
-      where: { tenantId, slug, active: true },
+      where: {
+        slug,
+        active: true,
+        ...(tenantId ? { tenantId } : { tenant: { status: 'ACTIVE' } }),
+      },
       include: withRelations,
     });
     return row ? toDomain(row, locale) : null;

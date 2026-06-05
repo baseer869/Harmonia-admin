@@ -125,6 +125,15 @@ export const reservationRepository = {
     return t && t.status === 'ACTIVE' ? t.id : null;
   },
 
+  /** The tenant that owns an active service (marketplace booking resolution). */
+  async tenantIdOfService(serviceId: string): Promise<string | null> {
+    const s = await prisma.service.findFirst({
+      where: { id: serviceId, active: true, tenant: { status: 'ACTIVE' } },
+      select: { tenantId: true },
+    });
+    return s?.tenantId ?? null;
+  },
+
   /** Find an existing customer (by tenant+email) or create a guest one. */
   async findOrCreateCustomer(
     tenantId: string,

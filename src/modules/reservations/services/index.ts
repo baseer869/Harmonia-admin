@@ -55,14 +55,18 @@ export const reservationService = {
  */
 export const publicBookingService = {
   async create(
-    tenantSlug: string,
+    _tenantSlug: string,
     input: CreateBookingInput,
     sessionCustomer: CustomerActor | null,
   ): Promise<BookingResult> {
-    const tenantId = await reservationRepository.tenantIdBySlug(tenantSlug);
-    if (!tenantId) throw ApiError.notFound('Unknown tenant.');
-
     const data = createBookingSchema.parse(input);
+
+    // Marketplace: the booking belongs to the tenant that owns the service.
+    const firstServiceId = data.items[0]?.serviceId;
+    const tenantId = firstServiceId
+      ? await reservationRepository.tenantIdOfService(firstServiceId)
+      : null;
+    if (!tenantId) throw ApiError.badRequest('A selected service is unavailable.');
 
     // Resolve the customer: session (must match tenant) or guest contact.
     let customerId: string;
