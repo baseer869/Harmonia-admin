@@ -185,10 +185,10 @@ export const reservationRepository = {
         currency = svc.currency;
         const text = resolveServiceText(svc.translations as ServiceTranslations | null, locale);
 
-        // Pricing model: the customer buys ONE package. The chosen package's
-        // price is absolute (it replaces the base); the base price IS the
-        // default "Base" package. Package price × people (per-person only).
-        // Add-ons are flat: each priced × its own counter, never × people.
+        // Pricing model: the customer buys ONE package at an absolute price (the
+        // base price IS the default "Base" package). A single count (quantity =
+        // people for per-person services, or units otherwise) multiplies ONLY the
+        // package. Add-ons are flat — each priced × its own counter, never × count.
         let packageCents = svc.priceCents; // Base package
         if (it.optionName) {
           // The client may send the package name in the customer's language —
@@ -198,15 +198,12 @@ export const reservationRepository = {
           );
           if (opt) packageCents = opt.priceDeltaCents; // absolute package price
         }
-        const packageTotal =
-          svc.priceMode === 'PER_PERSON' ? packageCents * Math.max(1, it.people ?? 1) : packageCents;
         const addonsTotal = (it.extras ?? []).reduce(
           (s, e) => s + e.priceCents * Math.max(1, e.qty ?? 1),
           0,
         );
-        // The quantity multiplies ONLY the package; add-ons are flat (their own
-        // counters). So: package × quantity + add-ons (added once).
-        subtotal += packageTotal * it.quantity + addonsTotal;
+        // package × count (quantity) + add-ons (added once).
+        subtotal += packageCents * it.quantity + addonsTotal;
 
         const when = it.scheduledAt ? new Date(it.scheduledAt) : null;
         if (when && !firstScheduledAt) firstScheduledAt = when;
@@ -219,9 +216,9 @@ export const reservationRepository = {
           serviceId: svc.id,
           title,
           quantity: it.quantity,
-          // Per-unit = the package part (× people); add-ons are listed separately
-          // in extrasJson and added once to the booking total.
-          unitPriceCents: packageTotal,
+          // Per-unit = the package price; add-ons are listed separately in
+          // extrasJson and added once to the booking total.
+          unitPriceCents: packageCents,
           scheduledAt: when,
           extrasJson: (it.extras ?? []) as unknown as Prisma.InputJsonValue,
         });
