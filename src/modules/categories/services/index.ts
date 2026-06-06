@@ -6,8 +6,10 @@ import type { Actor, Paginated } from '@/types';
 import { categoryRepository } from '../repository';
 import {
   createCategorySchema,
+  updateCategorySchema,
   listCategoriesQuerySchema,
   type CreateCategoryInput,
+  type UpdateCategoryInput,
   type ListCategoriesQuery,
 } from '../validation';
 import type { Category } from '../types';
@@ -49,6 +51,26 @@ export const categoryService = {
       description: data.description || null,
       imageUrl: data.imageUrl || null,
     });
+  },
+
+  async update(actor: Actor, id: string, input: UpdateCategoryInput): Promise<Category> {
+    assertCan(actor, 'update', 'service');
+    const scope = await scopeTenant(actor);
+    const data = updateCategorySchema.parse(input);
+    const slug = slugify(data.name);
+    const clash = await categoryRepository.findBySlug(scope, slug);
+    if (clash && clash.id !== id) {
+      throw ApiError.badRequest(`Category "${data.name}" already exists.`);
+    }
+    const updated = await categoryRepository.update(scope, id, {
+      name: data.name,
+      slug,
+      parentId: data.parentId || null,
+      description: data.description || null,
+      imageUrl: data.imageUrl || null,
+    });
+    if (!updated) throw ApiError.notFound('Category not found.');
+    return updated;
   },
 
   async remove(actor: Actor, id: string): Promise<void> {

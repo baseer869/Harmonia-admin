@@ -179,7 +179,10 @@ export const reservationRepository = {
       for (const it of items) {
         const svc = await tx.service.findFirst({
           where: { id: it.serviceId, tenantId, active: true },
-          include: { options: { orderBy: { sortOrder: 'asc' } } },
+          include: {
+            options: { orderBy: { sortOrder: 'asc' } },
+            extras: { orderBy: { sortOrder: 'asc' } },
+          },
         });
         if (!svc) throw ApiError.badRequest('A selected service is unavailable.');
         currency = svc.currency;
@@ -198,10 +201,18 @@ export const reservationRepository = {
           );
           if (opt) packageCents = opt.priceDeltaCents; // absolute package price
         }
-        const addonsTotal = (it.extras ?? []).reduce(
-          (s, e) => s + e.priceCents * Math.max(1, e.qty ?? 1),
-          0,
-        );
+        // Add-ons are resolved against the service's OWN extras (DB) by name —
+        // the price the client sent is ignored, and unknown add-ons are dropped.
+        const addonsResolved = (it.extras ?? [])
+          .map((e) => {
+            const dbExtra = svc.extras.find(
+              (x, i) => x.name === e.name || text.extraName(i, x.name) === e.name,
+            );
+            if (!dbExtra) return null;
+            return { name: dbExtra.name, priceCents: dbExtra.priceCents, qty: Math.max(1, e.qty ?? 1) };
+          })
+          .filter((e): e is { name: string; priceCents: number; qty: number } => e !== null);
+        const addonsTotal = addonsResolved.reduce((s, e) => s + e.priceCents * e.qty, 0);
         // package × count (quantity) + add-ons (added once).
         subtotal += packageCents * it.quantity + addonsTotal;
 
@@ -220,7 +231,7 @@ export const reservationRepository = {
           // extrasJson and added once to the booking total.
           unitPriceCents: packageCents,
           scheduledAt: when,
-          extrasJson: (it.extras ?? []) as unknown as Prisma.InputJsonValue,
+          extrasJson: addonsResolved as unknown as Prisma.InputJsonValue,
         });
       }
 

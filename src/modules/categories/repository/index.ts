@@ -43,6 +43,20 @@ export const categoryRepository = {
     });
     return toDomain(row);
   },
+  async update(
+    tenantId: string,
+    id: string,
+    data: { name: string; slug: string; parentId?: string | null; description?: string | null; imageUrl?: string | null },
+  ) {
+    const exists = await prisma.category.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!exists) return null;
+    const row = await prisma.category.update({
+      where: { id },
+      data,
+      include: { parent: { select: { name: true } } },
+    });
+    return toDomain(row);
+  },
   async remove(tenantId: string, id: string) {
     const r = await prisma.category.deleteMany({ where: { id, tenantId } });
     return r.count > 0;

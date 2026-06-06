@@ -131,29 +131,42 @@ export function BookingDetailModal({
           <section>
             <h3 className="mb-2 text-sm font-semibold">{t.bookings.detailItems} ({data.itemsCount})</h3>
             <div className="divide-y rounded-lg border">
-              {data.items.map((it, idx) => (
-                <div key={idx} className="px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-medium">
-                      {it.title} <span className="text-muted-foreground">× {it.quantity}</span>
-                    </span>
-                    <span className="text-sm">
-                      {money(it.unitPriceCents * it.quantity, data.currency)}
-                    </span>
-                  </div>
-                  <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
-                    <span>{t.bookings.unit} {money(it.unitPriceCents, data.currency)}</span>
-                    {it.scheduledAt && <span>{fmtDate(it.scheduledAt)}</span>}
-                    {it.extras.map((e) => (
-                      <span key={e.name}>
-                        + {e.name}
-                        {(e.qty ?? 1) > 1 ? ` ×${e.qty}` : ''} (
-                        {money(e.priceCents * (e.qty ?? 1), data.currency)})
+              {data.items.map((it, idx) => {
+                const addonsTotal = it.extras.reduce((s, e) => s + e.priceCents * (e.qty ?? 1), 0);
+                const lineTotal = it.unitPriceCents * it.quantity + addonsTotal;
+                return (
+                  <div key={idx} className="px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-medium">{it.title}</span>
+                      <span className="text-sm font-semibold">
+                        {money(lineTotal, data.currency)}
                       </span>
-                    ))}
+                    </div>
+                    <div className="text-muted-foreground mt-1.5 space-y-1 text-xs">
+                      {/* Package line */}
+                      <div className="flex justify-between gap-3">
+                        <span>
+                          {money(it.unitPriceCents, data.currency)} × {it.quantity}
+                        </span>
+                        <span>{money(it.unitPriceCents * it.quantity, data.currency)}</span>
+                      </div>
+                      {/* Add-on lines */}
+                      {it.extras.map((e) => (
+                        <div key={e.name} className="flex justify-between gap-3">
+                          <span>
+                            + {e.name}
+                            {(e.qty ?? 1) > 1
+                              ? ` (${money(e.priceCents, data.currency)} × ${e.qty})`
+                              : ''}
+                          </span>
+                          <span>{money(e.priceCents * (e.qty ?? 1), data.currency)}</span>
+                        </div>
+                      ))}
+                      {it.scheduledAt && <div>{fmtDate(it.scheduledAt)}</div>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 

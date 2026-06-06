@@ -18,7 +18,7 @@ interface Dict {
   /** Page titles + descriptions, keyed by page. */
   pages: Record<string, { title: string; desc: string }>;
   common: {
-    add: string; edit: string; view: string; save: string; cancel: string;
+    add: string; edit: string; view: string; save: string; cancel: string; delete: string;
     search: string; selectStatus: string; allStatuses: string; actions: string;
     status: string; active: string; hidden: string; loading: string; noResults: string;
     name: string; email: string; phone: string; city: string; total: string;
@@ -141,7 +141,7 @@ const DICT: Record<Locale, Dict> = {
       settings: { title: 'Settings', desc: 'Workspace settings.' },
     },
     common: {
-      add: 'Add', edit: 'Edit', view: 'View', save: 'Save changes', cancel: 'Cancel',
+      add: 'Add', edit: 'Edit', view: 'View', save: 'Save changes', cancel: 'Cancel', delete: 'Delete',
       search: 'Search', selectStatus: 'Select Status', allStatuses: 'All statuses',
       actions: 'Actions', status: 'Status', active: 'Active', hidden: 'Hidden',
       loading: 'Loading…', noResults: 'No results.', name: 'Name', email: 'Email',
@@ -269,7 +269,7 @@ const DICT: Record<Locale, Dict> = {
       settings: { title: 'Paramètres', desc: 'Paramètres de l’espace.' },
     },
     common: {
-      add: 'Ajouter', edit: 'Modifier', view: 'Voir', save: 'Enregistrer', cancel: 'Annuler',
+      add: 'Ajouter', edit: 'Modifier', view: 'Voir', save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer',
       search: 'Rechercher', selectStatus: 'Statut', allStatuses: 'Tous les statuts',
       actions: 'Actions', status: 'Statut', active: 'Actif', hidden: 'Masqué',
       loading: 'Chargement…', noResults: 'Aucun résultat.', name: 'Nom', email: 'E-mail',

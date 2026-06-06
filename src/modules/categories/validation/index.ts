@@ -14,5 +14,9 @@ export const listCategoriesQuerySchema = z.object({
   tenantId: z.string().optional(),
 });
 
+/** Update accepts the same shape as create (a full replace of the editable fields). */
+export const updateCategorySchema = createCategorySchema;
+
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 export type ListCategoriesQuery = z.infer<typeof listCategoriesQuerySchema>;
