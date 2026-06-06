@@ -33,7 +33,7 @@ interface Dict {
     emptyFiltered: string; loading: string; detailCustomer: string; detailItems: string;
     detailNotes: string; detailSchedule: string; detailBookedOn: string; subtotal: string;
     discount: string; approve: string; reject: string; markCompleted: string; cancel: string;
-    updateHint: string; unit: string;
+    updateHint: string; unit: string; people: string; qtyLabel: string; pkgBase: string;
   };
   services: {
     listing: string; addService: string; title: string; slug: string; price: string;
@@ -158,6 +158,7 @@ const DICT: Record<Locale, Dict> = {
       detailNotes: 'Notes', detailSchedule: 'Scheduled', detailBookedOn: 'Booked on',
       subtotal: 'Subtotal', discount: 'Discount', approve: 'Approve', reject: 'Reject',
       markCompleted: 'Mark completed', cancel: 'Cancel', updateHint: 'Update the booking status', unit: 'Unit',
+      people: 'people', qtyLabel: 'qty', pkgBase: 'Base',
     },
     services: {
       listing: 'Service Listing', addService: 'Add Service', title: 'Title', slug: 'Slug',
@@ -286,6 +287,7 @@ const DICT: Record<Locale, Dict> = {
       detailNotes: 'Notes', detailSchedule: 'Prévu le', detailBookedOn: 'Réservé le',
       subtotal: 'Sous-total', discount: 'Remise', approve: 'Approuver', reject: 'Rejeter',
       markCompleted: 'Marquer terminée', cancel: 'Annuler', updateHint: 'Mettre à jour le statut', unit: 'Unité',
+      people: 'personnes', qtyLabel: 'qté', pkgBase: 'Base',
     },
     services: {
       listing: 'Liste des services', addService: 'Ajouter un service', title: 'Titre', slug: 'Slug',

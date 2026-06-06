@@ -137,16 +137,22 @@ export function BookingDetailModal({
                 return (
                   <div key={idx} className="px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium">{it.title}</span>
+                      <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                        {it.title}
+                        <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs">
+                          {it.packageName ?? t.bookings.pkgBase}
+                        </span>
+                      </span>
                       <span className="text-sm font-semibold">
                         {money(lineTotal, data.currency)}
                       </span>
                     </div>
                     <div className="text-muted-foreground mt-1.5 space-y-1 text-xs">
-                      {/* Package line */}
+                      {/* Package line: unit price × the count (people / qty) */}
                       <div className="flex justify-between gap-3">
                         <span>
-                          {money(it.unitPriceCents, data.currency)} × {it.quantity}
+                          {money(it.unitPriceCents, data.currency)} × {it.quantity}{' '}
+                          {it.perPerson ? t.bookings.people : t.bookings.qtyLabel}
                         </span>
                         <span>{money(it.unitPriceCents * it.quantity, data.currency)}</span>
                       </div>

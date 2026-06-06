@@ -79,12 +79,20 @@ export const reservationRepository = {
       where: { id, ...(tenantId ? { tenantId } : {}) },
       include: {
         customer: { select: { name: true, email: true, phone: true, city: true } },
-        items: { orderBy: { id: 'asc' } },
+        items: {
+          orderBy: { id: 'asc' },
+          include: {
+            option: { select: { name: true } },
+            service: { select: { priceMode: true } },
+          },
+        },
       },
     });
     if (!r) return null;
     const items: ReservationItemDetail[] = r.items.map((it) => ({
       title: it.title,
+      packageName: it.option?.name ?? null,
+      perPerson: it.service?.priceMode === 'PER_PERSON',
       quantity: it.quantity,
       unitPriceCents: it.unitPriceCents,
       scheduledAt: it.scheduledAt ? it.scheduledAt.toISOString() : null,
@@ -169,6 +177,7 @@ export const reservationRepository = {
 
       const itemRows = [] as {
         serviceId: string;
+        optionId: string | null;
         title: string;
         quantity: number;
         unitPriceCents: number;
@@ -192,15 +201,14 @@ export const reservationRepository = {
         // base price IS the default "Base" package). A single count (quantity =
         // people for per-person services, or units otherwise) multiplies ONLY the
         // package. Add-ons are flat — each priced × its own counter, never × count.
-        let packageCents = svc.priceCents; // Base package
-        if (it.optionName) {
-          // The client may send the package name in the customer's language —
-          // match against both the base name and the localized name by index.
-          const opt = svc.options.find(
-            (o, i) => o.name === it.optionName || text.optionName(i, o.name) === it.optionName,
-          );
-          if (opt) packageCents = opt.priceDeltaCents; // absolute package price
-        }
+        // The client may send the package name in the customer's language —
+        // match against both the base name and the localized name by index.
+        const opt = it.optionName
+          ? svc.options.find(
+              (o, i) => o.name === it.optionName || text.optionName(i, o.name) === it.optionName,
+            )
+          : undefined;
+        const packageCents = opt ? opt.priceDeltaCents : svc.priceCents; // absolute package price
         // Add-ons are resolved against the service's OWN extras (DB) by name —
         // the price the client sent is ignored, and unknown add-ons are dropped.
         const addonsResolved = (it.extras ?? [])
@@ -225,6 +233,7 @@ export const reservationRepository = {
 
         itemRows.push({
           serviceId: svc.id,
+          optionId: opt?.id ?? null, // the chosen package (null = Base)
           title,
           quantity: it.quantity,
           // Per-unit = the package price; add-ons are listed separately in

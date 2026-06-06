@@ -19,6 +19,10 @@ export interface Reservation {
 
 export interface ReservationItemDetail {
   title: string;
+  /** Chosen package (null = the Base package). */
+  packageName: string | null;
+  /** True for per-person services — `quantity` is the number of people. */
+  perPerson: boolean;
   quantity: number;
   unitPriceCents: number;
   scheduledAt: string | null;
