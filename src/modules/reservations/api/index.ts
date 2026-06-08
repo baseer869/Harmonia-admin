@@ -31,7 +31,7 @@ export const publicBookingApi = {
     tenantSlug: string,
     input: CreateBookingInput,
     sessionCustomer: CustomerActor | null,
-  ): Promise<BookingResult> {
+  ): Promise<BookingResult[]> {
     return publicBookingService.create(tenantSlug, input, sessionCustomer);
   },
 };

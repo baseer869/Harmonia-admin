@@ -54,30 +54,51 @@ export const reservationService = {
  * payload. Pricing is computed server-side; a PENDING reservation is created.
  */
 export const publicBookingService = {
+  /**
+   * Multi-vendor checkout: items may span several providers. They're grouped by
+   * the service's tenant and ONE reservation is created per provider — returned
+   * as an array (one booking code per provider).
+   */
   async create(
     _tenantSlug: string,
     input: CreateBookingInput,
     sessionCustomer: CustomerActor | null,
-  ): Promise<BookingResult> {
+  ): Promise<BookingResult[]> {
     const data = createBookingSchema.parse(input);
+    if (!data.items.length) throw ApiError.badRequest('Your cart is empty.');
 
-    // Marketplace: the booking belongs to the tenant that owns the service.
-    const firstServiceId = data.items[0]?.serviceId;
-    const tenantId = firstServiceId
-      ? await reservationRepository.tenantIdOfService(firstServiceId)
-      : null;
-    if (!tenantId) throw ApiError.badRequest('A selected service is unavailable.');
-
-    // Resolve the customer: session (must match tenant) or guest contact.
-    let customerId: string;
-    if (sessionCustomer && sessionCustomer.tenantId === tenantId) {
-      customerId = sessionCustomer.id;
-    } else if (data.customer) {
-      customerId = await reservationRepository.findOrCreateCustomer(tenantId, data.customer);
-    } else {
-      throw ApiError.badRequest('Sign in or provide contact details to book.');
+    // Resolve each item's owning tenant, then group items by provider.
+    const groups = new Map<string, typeof data.items>();
+    for (const it of data.items) {
+      const tid = await reservationRepository.tenantIdOfService(it.serviceId);
+      if (!tid) throw ApiError.badRequest('A selected service is unavailable.');
+      const arr = groups.get(tid) ?? [];
+      arr.push(it);
+      groups.set(tid, arr);
     }
 
-    return reservationRepository.createBooking(tenantId, customerId, data.items, data.notes, data.locale ?? 'fr');
+    const results: BookingResult[] = [];
+    for (const [tenantId, groupItems] of groups) {
+      // Customers are tenant-scoped: a session customer matches one provider,
+      // a guest is found/created per provider from the same contact details.
+      let customerId: string;
+      if (sessionCustomer && sessionCustomer.tenantId === tenantId) {
+        customerId = sessionCustomer.id;
+      } else if (data.customer) {
+        customerId = await reservationRepository.findOrCreateCustomer(tenantId, data.customer);
+      } else {
+        throw ApiError.badRequest('Sign in or provide contact details to book.');
+      }
+      results.push(
+        await reservationRepository.createBooking(
+          tenantId,
+          customerId,
+          groupItems,
+          data.notes,
+          data.locale ?? 'fr',
+        ),
+      );
+    }
+    return results;
   },
 };
