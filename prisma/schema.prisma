@@ -417,7 +417,7 @@ model CartItem {
   serviceId      String
   service        Service        @relation(fields: [serviceId], references: [id])
   optionId       String?
-  option         ServiceOption? @relation(fields: [optionId], references: [id])
+  option         ServiceOption? @relation(fields: [optionId], references: [id], onDelete: SetNull)
   quantity       Int            @default(1)
   scheduledAt    DateTime?
   extrasJson     Json? // snapshot of chosen extras
@@ -465,8 +465,9 @@ model ReservationItem {
   serviceId      String
   service        Service        @relation(fields: [serviceId], references: [id])
   optionId       String?
-  option         ServiceOption? @relation(fields: [optionId], references: [id])
+  option         ServiceOption? @relation(fields: [optionId], references: [id], onDelete: SetNull)
   title          String // snapshot of service title at booking time
+  optionName     String? // snapshot of the chosen package name (survives edits)
   quantity       Int            @default(1)
   unitPriceCents Int
   scheduledAt    DateTime?

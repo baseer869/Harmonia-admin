@@ -5,18 +5,38 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { type ColumnDef } from '@tanstack/react-table';
 
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 
 import { StatusBadge } from '@/components/ui';
 import { DataTable, TABLE_PAGE_SIZE } from '@/components/tables';
 import { fromMinorUnits } from '@/constants';
 import { useAdminI18n } from '@/lib/i18n/provider';
 
-import { useServices } from '../hooks';
+import { useServices, useDeleteService } from '../hooks';
 import type { Service } from '../types';
 import { ServicePreview } from './service-preview';
 
 type Dict = ReturnType<typeof useAdminI18n>['t'];
+
+/** Delete a service (with confirm); a booked service returns a clear message. */
+function DeleteServiceButton({ service, t }: { service: Service; t: Dict }) {
+  const del = useDeleteService();
+  const onClick = () => {
+    if (!window.confirm(t.services.confirmDelete)) return;
+    del.mutate(service.id, { onError: (e) => window.alert((e as Error).message) });
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={del.isPending}
+      className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
+      aria-label="Delete"
+    >
+      <Trash2 className="size-4" />
+    </button>
+  );
+}
 
 function formatPrice(cents: number, currency: string): string {
   return `${fromMinorUnits(cents, currency).toLocaleString(undefined, {
@@ -76,6 +96,7 @@ function buildColumns(onPreview: (s: Service) => void, t: Dict): ColumnDef<Servi
           >
             <Pencil className="size-4" />
           </Link>
+          <DeleteServiceButton service={row.original} t={t} />
         </div>
       ),
     },

@@ -37,7 +37,7 @@ interface Dict {
   };
   services: {
     listing: string; addService: string; title: string; slug: string; price: string;
-    onRequest: string; empty: string; loading: string;
+    onRequest: string; empty: string; loading: string; confirmDelete: string;
   };
   lists: {
     tenantListing: string; adminListing: string; appUsersListing: string;
@@ -163,7 +163,7 @@ const DICT: Record<Locale, Dict> = {
     services: {
       listing: 'Service Listing', addService: 'Add Service', title: 'Title', slug: 'Slug',
       price: 'Price', onRequest: 'On request', empty: 'No services yet. Add the first one to your catalog.',
-      loading: 'Loading services…',
+      loading: 'Loading services…', confirmDelete: 'Delete this service? This cannot be undone.',
     },
     lists: {
       tenantListing: 'Tenant Listing', adminListing: 'Admins Listing', appUsersListing: 'App Users Listing',
@@ -292,7 +292,7 @@ const DICT: Record<Locale, Dict> = {
     services: {
       listing: 'Liste des services', addService: 'Ajouter un service', title: 'Titre', slug: 'Slug',
       price: 'Prix', onRequest: 'Sur demande', empty: 'Aucun service. Ajoutez le premier à votre catalogue.',
-      loading: 'Chargement des services…',
+      loading: 'Chargement des services…', confirmDelete: 'Supprimer ce service ? Action irréversible.',
     },
     lists: {
       tenantListing: 'Liste des locataires', adminListing: 'Liste des admins', appUsersListing: 'Liste des utilisateurs',

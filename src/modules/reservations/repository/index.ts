@@ -91,7 +91,7 @@ export const reservationRepository = {
     if (!r) return null;
     const items: ReservationItemDetail[] = r.items.map((it) => ({
       title: it.title,
-      packageName: it.option?.name ?? null,
+      packageName: it.optionName ?? it.option?.name ?? null,
       perPerson: it.service?.priceMode === 'PER_PERSON',
       quantity: it.quantity,
       unitPriceCents: it.unitPriceCents,
@@ -178,6 +178,7 @@ export const reservationRepository = {
       const itemRows = [] as {
         serviceId: string;
         optionId: string | null;
+        optionName: string | null;
         title: string;
         quantity: number;
         unitPriceCents: number;
@@ -209,6 +210,8 @@ export const reservationRepository = {
             )
           : undefined;
         const packageCents = opt ? opt.priceDeltaCents : svc.priceCents; // absolute package price
+        // Snapshot the package name so it survives later service edits/deletes.
+        const optionName = opt ? text.optionName(svc.options.indexOf(opt), opt.name) : null;
         // Add-ons are resolved against the service's OWN extras (DB) by name —
         // the price the client sent is ignored, and unknown add-ons are dropped.
         const addonsResolved = (it.extras ?? [])
@@ -234,6 +237,7 @@ export const reservationRepository = {
         itemRows.push({
           serviceId: svc.id,
           optionId: opt?.id ?? null, // the chosen package (null = Base)
+          optionName,
           title,
           quantity: it.quantity,
           // Per-unit = the package price; add-ons are listed separately in

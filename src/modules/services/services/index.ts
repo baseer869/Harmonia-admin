@@ -150,6 +150,14 @@ export const serviceCatalogService = {
 
   async remove(actor: Actor, id: string): Promise<void> {
     assertCan(actor, 'delete', 'service');
+    // A service with bookings keeps booking history (and the DB blocks the
+    // delete) — surface a clear message instead of a raw FK error.
+    const booked = await prisma.reservationItem.count({ where: { serviceId: id } });
+    if (booked > 0) {
+      throw ApiError.badRequest(
+        'This service has bookings. Hide it (set inactive) instead of deleting.',
+      );
+    }
     const ok = await serviceRepository.remove(readScope(actor), id);
     if (!ok) throw ApiError.notFound('Service not found.');
   },
