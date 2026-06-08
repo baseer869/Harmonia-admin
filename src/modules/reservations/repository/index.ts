@@ -172,7 +172,7 @@ export const reservationRepository = {
   ): Promise<BookingResult> {
     return prisma.$transaction(async (tx) => {
       let subtotal = 0;
-      let currency = 'MAD';
+      let currency: string | null = null;
       let firstScheduledAt: Date | null = null;
 
       const itemRows = [] as {
@@ -195,6 +195,11 @@ export const reservationRepository = {
           },
         });
         if (!svc) throw ApiError.badRequest('A selected service is unavailable.');
+        // A booking must use a single currency (the cart already enforces one
+        // provider at a time); reject any mix defensively.
+        if (currency && currency !== svc.currency) {
+          throw ApiError.badRequest('All items in a booking must share one currency.');
+        }
         currency = svc.currency;
         const text = resolveServiceText(svc.translations as ServiceTranslations | null, locale);
 
@@ -258,7 +263,7 @@ export const reservationRepository = {
           status: 'PENDING',
           subtotalCents: subtotal,
           totalCents: subtotal,
-          currency,
+          currency: currency ?? 'MAD',
           scheduledAt: firstScheduledAt,
           notes: notes ?? null,
           items: { create: itemRows },
