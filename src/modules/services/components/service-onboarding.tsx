@@ -697,11 +697,17 @@ function ReviewStep({
     v.type === 'QUOTE'
       ? t.svcForm.onQuote
       : `${v.price || 0} ${v.currency} · ${modeLabel[v.priceMode]}`;
-  const rows: [string, string][] = [
+  const accepted = Array.from(new Set([v.currency, ...(v.acceptedCurrencies ?? [])])).join(', ');
+  const facts: [string, string][] = [
     [t.svcForm.rType, v.type],
-    [t.svcForm.rTitle, block.title],
-    [t.svcForm.rPrice, priceText],
     [t.svcForm.contentLanguage, langName],
+    [t.svcForm.accepted, accepted],
+    [t.svcForm.requiresDate, v.requiresDate ? t.svcForm.yes : t.svcForm.no],
+    ...(v.maxPeople ? ([[t.svcForm.maxPeople, String(v.maxPeople)]] as [string, string][]) : []),
+    ...(v.durationMinutes
+      ? ([[t.svcForm.duration, `${v.durationMinutes} min`]] as [string, string][])
+      : []),
+    [t.svcForm.visible, v.active ? t.common.active : t.common.hidden],
   ];
 
   // Live price breakdown so the admin sees exactly what variants/add-ons add up to.
@@ -720,66 +726,71 @@ function ReviewStep({
   const exampleTotal = baseNum + addonsSum;
   const fmt = (n: number) => `${n.toLocaleString()} ${cur}`;
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-lg border">
-        <div className="bg-muted relative aspect-[16/5] w-full">
+    <div className="mx-auto max-w-2xl space-y-3 text-sm">
+      {/* Header: thumbnail + title + chips */}
+      <div className="flex items-start gap-3 rounded-lg border p-3">
+        <div className="bg-muted size-16 shrink-0 overflow-hidden rounded-md">
           {v.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={v.coverUrl} alt="" className="h-full w-full object-cover" />
+            <img src={v.coverUrl} alt="" className="size-full object-cover" />
           ) : (
-            <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+            <div className="text-muted-foreground grid size-full place-items-center text-center text-[10px]">
               {t.svcForm.noCover}
             </div>
           )}
         </div>
-        <div className="px-6 py-5">
-          <h3 className="text-xl font-semibold">{block.title || t.svcForm.untitled}</h3>
-          <p className="text-muted-foreground text-sm">{block.description || '—'}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h3 className="truncate font-semibold">{block.title || t.svcForm.untitled}</h3>
+            <span className="bg-accent text-muted-foreground rounded-full px-2 py-0.5 text-[11px]">{v.type}</span>
+          </div>
+          <p className="text-primary mt-0.5 font-semibold">{priceText}</p>
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{block.description || '—'}</p>
         </div>
       </div>
-      <div className="divide-y rounded-lg border">
-        {rows.map(([k, val]) => (
-          <div key={k} className="flex justify-between gap-4 px-4 py-3 text-[15px]">
+
+      {/* Facts grid */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-lg border p-3 text-xs sm:grid-cols-3">
+        {facts.map(([k, val]) => (
+          <div key={k} className="flex flex-col">
             <span className="text-muted-foreground">{k}</span>
-            <span className="text-right font-medium">{val}</span>
+            <span className="font-medium">{val}</span>
           </div>
         ))}
       </div>
 
+      {/* Price breakdown */}
       {!isQuoteType && (
-        <div className="overflow-hidden rounded-lg border">
-          <div className="bg-muted/40 px-4 py-2.5 text-sm font-semibold">{t.svcForm.breakdown}</div>
-          <div className="divide-y text-[15px]">
-            <div className="flex justify-between gap-4 px-4 py-2.5">
+        <div className="overflow-hidden rounded-lg border text-xs">
+          <div className="bg-muted/40 px-3 py-1.5 font-semibold">{t.svcForm.breakdown}</div>
+          <div className="divide-y">
+            <div className="flex justify-between gap-3 px-3 py-1.5">
               <span className="text-muted-foreground">{t.svcForm.basePrice}</span>
               <span className="font-medium">{`${fmt(baseNum)} · ${modeLabel[v.priceMode]}`}</span>
             </div>
-
             {variants.length > 0 && (
-              <div className="px-4 pt-2.5 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground px-3 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-wide uppercase">
                 {t.svcForm.variantsLabel}
               </div>
             )}
             {variants.map((it, i) => (
-              <div key={`v${i}`} className="flex justify-between gap-4 px-4 py-2 pl-7">
-                <span>{it.name}</span>
+              <div key={`v${i}`} className="flex justify-between gap-3 px-3 py-1 pl-6">
+                <span className="truncate">{it.name}</span>
                 <span className="font-medium">{fmt(it.price)}</span>
               </div>
             ))}
-
             {addons.length > 0 && (
-              <div className="px-4 pt-2.5 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground px-3 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-wide uppercase">
                 {t.svcForm.addonsLabel}
               </div>
             )}
             {addons.map((it, i) => (
-              <div key={`a${i}`} className="flex justify-between gap-4 px-4 py-2 pl-7">
-                <span>{it.name}</span>
+              <div key={`a${i}`} className="flex justify-between gap-3 px-3 py-1 pl-6">
+                <span className="truncate">{it.name}</span>
                 <span className="font-medium">+ {fmt(it.price)}</span>
               </div>
             ))}
-
-            <div className="bg-primary/5 flex justify-between gap-4 px-4 py-3 font-semibold">
+            <div className="bg-primary/5 flex justify-between gap-3 px-3 py-2 font-semibold">
               <span>{t.svcForm.exampleTotal}</span>
               <span className="text-primary">{fmt(exampleTotal)}</span>
             </div>
@@ -787,7 +798,7 @@ function ReviewStep({
         </div>
       )}
 
-      {rootError ? <p className="text-destructive text-sm">{rootError}</p> : null}
+      {rootError ? <p className="text-destructive text-xs">{rootError}</p> : null}
     </div>
   );
 }
