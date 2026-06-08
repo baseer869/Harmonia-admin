@@ -727,19 +727,19 @@ function ReviewStep({
   const fmt = (n: number) => `${n.toLocaleString()} ${cur}`;
   return (
     <div className="mx-auto max-w-2xl space-y-3 text-sm">
-      {/* Header: thumbnail + title + chips */}
-      <div className="flex items-start gap-3 rounded-lg border p-3">
-        <div className="bg-muted size-16 shrink-0 overflow-hidden rounded-md">
+      {/* Header: cover banner + title + chips */}
+      <div className="overflow-hidden rounded-lg border">
+        <div className="bg-muted relative aspect-[16/7] w-full">
           {v.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={v.coverUrl} alt="" className="size-full object-cover" />
           ) : (
-            <div className="text-muted-foreground grid size-full place-items-center text-center text-[10px]">
+            <div className="text-muted-foreground grid size-full place-items-center text-sm">
               {t.svcForm.noCover}
             </div>
           )}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="p-3">
           <div className="flex flex-wrap items-center gap-1.5">
             <h3 className="truncate font-semibold">{block.title || t.svcForm.untitled}</h3>
             <span className="bg-accent text-muted-foreground rounded-full px-2 py-0.5 text-[11px]">{v.type}</span>
