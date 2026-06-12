@@ -44,6 +44,8 @@ function resolveAllowedOrigin(requestOrigin?: string | null): string {
     const allowed =
       requestOrigin === fallback ||
       /^localhost(:\d+)?$/.test(host) ||
+      host === 'harmoniagroup.co' ||
+      host.endsWith('.harmoniagroup.co') ||
       host.endsWith('.vercel.app');
     return allowed ? requestOrigin : fallback;
   } catch {
